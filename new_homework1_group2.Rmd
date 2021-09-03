@@ -70,7 +70,7 @@ What are the variable types? Any missing values we should worry about?
 
 glimpse(drinks)
 
-#The variable types can be seen as below. For country is character, for beer_serving, spirit_servings and wine_servings are integer, for total_litres_of_pure_alcohol is double.
+#The variable types can be seen as below. For country it is character, for beer_serving, spirit_servings and wine_servings they are integer, for total_litres_of_pure_alcohol it is double.
 
 ```
 
