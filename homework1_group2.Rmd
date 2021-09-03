@@ -85,8 +85,10 @@ top_25_beer <- drinks %>%
   top_n(25,beer_servings)
 
 ggplot(top_25_beer,aes(y=fct_reorder(country,beer_servings),x=beer_servings))+
-  geom_col(fill="green")+
-  labs(title = "Nambian people drink more beer")
+  geom_col(fill="orange")+
+  labs(title = "Top 25 beer consuming countries",x = "Beer servings", y = "Country")+
+  NULL
+  
 
 
 ```
@@ -100,7 +102,9 @@ top_25_wine <- drinks %>%
   top_n(25,wine_servings)
 
 ggplot(top_25_wine,aes(y=fct_reorder(country,wine_servings),x=wine_servings))+
-  geom_col(fill="blue")
+  geom_col(fill="blue")+
+  labs(title = "Top 25 wine consuming countries",x = "Wine servings", y = "Country")+
+  NULL
 
 ```
 
@@ -111,7 +115,10 @@ top_25_spirit <- drinks %>%
   top_n(25,spirit_servings)
 
 ggplot(top_25_spirit,aes(y=fct_reorder(country,spirit_servings),x=spirit_servings))+
-  geom_col(fill="red")
+  geom_col(fill="red")+
+  labs(title = "Top 25 spirit consuming countries",x = "Spirit servings", y = "Country")+
+  NULL
+
 ```
 
 What can you infer from these plots? Don't just explain what's in the graph, but speculate or tell a short story (1-2 paragraphs max).
