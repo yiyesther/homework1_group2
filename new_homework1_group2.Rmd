@@ -126,7 +126,7 @@ ggplot(top_25_spirit,aes(y=fct_reorder(country,spirit_servings),x=spirit_serving
 What can you infer from these plots? Don't just explain what's in the graph, but speculate or tell a short story (1-2 paragraphs max).
 
 > TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
-Namibia has the most beer consumption, which is unexpected. This maybe because it's a former German colony, in which beer culture could have been established historically, leading to a higher beer consumption. France has the most wine consumption, which is expected. It is a culture in France to associate every meal with a wine-pairing. And France is the second largest wine producing country in the world. Portugal has the second most wine consumption, which is also expected, given its tradition for producing and consuming fortified wines, such as Port and Madeira. Grenada has the most spirit consumption. This is probably due to the fact that spirits  make up 66% of all alcohol consumption in this country. 
+Namibia has the highest beer consumption, which is unexpected. This maybe because taht it's a former German colony, in which beer culture could have been established historically, leading to a higher beer consumption. France has the most wine consumption, which is expected. It is a culture in France to associate every meal with a wine-pairing, and France is the second largest wine producing country in the world. Portugal has the second highest wine consumption, which is also expected, given its tradition for producing and consuming fortified wines, such as Port and Madeira. Grenada has the highest spirit consumption. This is probably due to the fact that spiritsmake up 66% of all alcohol consumption in this country. 
 
 # Analysis of movies- IMDB dataset
 
@@ -262,7 +262,7 @@ unique_movies %>%
   geom_point() +
   labs(title = "Gross vs. Cast facebook likes", x = "Cast Facebook Likes", y = "Gross [$]")
 
-#It's unlikely that number of facebook likes the cast received will be a good predictor of how much money a movie will make. X-axes will be the independent variable "cast_facebook_likes", Y-axes will be the dependent variable "gross". There is no obvious correlations between the two variables.
+#It's unlikely that the number of facebook likes the cast received will be a good predictor of how much money a movie will make. X-axis is the independent variable "cast_facebook_likes", Y-axis is the dependent variable "gross". There is no obvious correlations between the two variables.
 
 
 ```
@@ -276,7 +276,7 @@ unique_movies %>%
   labs(title = "Gross vs. Budget", x = "Budget [$]", y = "Gross [$]")
 
 
-#It's likely that budget will be a weak predictor of how much money a movie will make. There is a lot of variation and scatter in the data as the correlation is very weak.
+#It's inferred that budget will be a weak predictor of how much money a movie will make. There is a lot of variation and scatter in the data and the correlation is very weak.
 
 
 ```
@@ -314,7 +314,7 @@ Based on this dataset, create a table and a bar plot that shows the number of co
 ```{r companies_per_sector}
 
 # YOUR CODE GOES HERE
-
+companies_per_sector <- nyse 
 
 ```
 
@@ -380,7 +380,7 @@ Plot a density plot, using `geom_density()`, for each of the stocks
 ```{r density_monthly_returns}
 
 # YOUR CODE GOES HERE
-
+sdfg
 ```
 
 What can you infer from this plot? Which stock is the riskiest? The least risky? 
