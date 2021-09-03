@@ -397,7 +397,7 @@ Finally, make a plot that shows the expected monthly return (mean) of a stock on
 What can you infer from this plot? Are there any stocks which, while being riskier, do not have a higher expected return?
 
 > TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
-
+123git
 
 
 # On your own: IBM HR Analytics
