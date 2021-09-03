@@ -314,9 +314,26 @@ Based on this dataset, create a table and a bar plot that shows the number of co
 ```{r companies_per_sector}
 
 # YOUR CODE GOES HERE
+companies_per_sector <- nyse %>%
+  group_by(sector) %>%
+  count(sort=TRUE)
 
+colnames(companies_per_sector) <- c("Sector", "Number of Companies")
+  
+companies_per_sector %>% 
+  kable()
 
 ```
+```{r}
+colnames(companies_per_sector) <- c("sector", "number_of_companies")
+
+companies_per_sector %>% 
+  ggplot(aes(reorder(sector,-number_of_companies), number_of_companies)) +
+  geom_bar(stat="identity")
+  #to add labs
+
+```
+
 
 Next, let's choose some stocks and their ticker symbols and download some data. You **MUST** choose 6 different stocks from the ones listed below; You should, however, add `SPY` which is the SP500 ETF (Exchange Traded Fund).
 
@@ -325,7 +342,7 @@ Next, let's choose some stocks and their ticker symbols and download some data. 
 # Notice the cache=TRUE argument inthe chunk options. Because getting data is time consuming, 
 # cache=TRUE means that once it downloads data, the chunk will not run again next time you knit your Rmd
 
-myStocks <- c("AAPL","JPM","DIS","DPZ","ANF","TSLA","XOM","SPY" ) %>%
+myStocks <- c("AAPL","DIS","DPZ","ANF","TSLA","XOM","SPY" ) %>%
   tq_get(get  = "stock.prices",
          from = "2011-01-01",
          to   = "2021-08-31") %>%
@@ -372,6 +389,18 @@ Create a table where you summarise monthly returns for each of the stocks and `S
 ```{r summarise_monthly_returns}
 
 # YOUR CODE GOES HERE
+summarise_monthly_returns <- myStocks_returns_monthly %>%
+  group_by(symbol) %>% 
+  summarise(min_monthly_return = min(monthly_returns), 
+            max_monthly_return = max(monthly_returns),
+            median_monthly_return = median(monthly_returns), 
+            mean_monthly_return = mean(monthly_returns), 
+            sd_monthly_return = sd(monthly_returns)) 
+  ##to add labs
+
+summarise_monthly_returns %>% 
+  kable()
+
 
 ```
 
@@ -380,23 +409,40 @@ Plot a density plot, using `geom_density()`, for each of the stocks
 ```{r density_monthly_returns}
 
 # YOUR CODE GOES HERE
+myStocks_returns_monthly %>%
+  ggplot(aes(x=monthly_returns)) + 
+  geom_density() +
+  facet_wrap(vars(symbol))
+  ##to add labs
 
 ```
 
 What can you infer from this plot? Which stock is the riskiest? The least risky? 
 
 > TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
+The risk of the stock can be determined by visually analyzing the proportion of the graph area that lies in the left of the y-axis. This determines how the stocks were performing and whether they were likely to produce negative returns. Based on this, the riskiest stock would be XOM, because its past performance indicates that it is quite likely that it produces negative returns. The least risky stock would be DPZ, because its past performance indicates that it is likely that it produces positive returns.
 
 Finally, make a plot that shows the expected monthly return (mean) of a stock on the Y axis and the risk (standard deviation) in the X-axis. Please use `ggrepel::geom_text_repel()` to label each stock
 
 ```{r risk_return_plot}
 # YOUR CODE GOES HERE
+library(ggrepel)
+myStocks_returns_monthly %>% 
+  group_by(symbol) %>% 
+  summarise(mean_monthly_return = mean(monthly_returns), 
+            sd_monthly_return = sd(monthly_returns)) %>% 
+  ggplot(aes(y=sd_monthly_return, x=mean_monthly_return, label = symbol)) + 
+  geom_point() +
+  geom_text_repel()
+  #to add labs
+
 
 ```
 
 What can you infer from this plot? Are there any stocks which, while being riskier, do not have a higher expected return?
 
 > TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
+Based on this graph, ANF had a broad distribution of potential returns but not a higher expected return when compared to other stocks. Therefore it is high risk but not high expected return. 
 
 
 
