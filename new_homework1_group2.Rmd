@@ -70,7 +70,7 @@ What are the variable types? Any missing values we should worry about?
 
 glimpse(drinks)
 
-#The variable types can be seen as below. For country is character, for beer_serving, spirit_servings and wine_servings are integer, for total_litres_of_pure_alcohol is double.
+#The variable types can be seen as below. For country it is character, for beer_serving, spirit_servings and wine_servings they are integer, for total_litres_of_pure_alcohol it is double.
 
 ```
 
@@ -329,8 +329,8 @@ colnames(companies_per_sector) <- c("sector", "number_of_companies")
 
 companies_per_sector %>% 
   ggplot(aes(reorder(sector,-number_of_companies), number_of_companies)) +
-  geom_bar(stat="identity")
-  #to add labs
+  geom_bar(stat="identity")+
+  labs(title = "Number of companies in each sector", x = "Sector", y = "Number of Companies")
 
 ```
 
@@ -396,6 +396,8 @@ summarise_monthly_returns <- myStocks_returns_monthly %>%
             median_monthly_return = median(monthly_returns), 
             mean_monthly_return = mean(monthly_returns), 
             sd_monthly_return = sd(monthly_returns)) 
+
+colnames(summarise_monthly_returns) <- c("Minimum Monthly Return [$]", "Maximum Monthly Return [$]", "Median of Monthly Return [$]", "Mean of Monthly Return [$]", "Standard Deviation of Monthly Return [$]")
   ##to add labs
 
 summarise_monthly_returns %>% 
@@ -412,8 +414,9 @@ Plot a density plot, using `geom_density()`, for each of the stocks
 myStocks_returns_monthly %>%
   ggplot(aes(x=monthly_returns)) + 
   geom_density() +
-  facet_wrap(vars(symbol))
-  ##to add labs
+  facet_wrap(vars(symbol))+
+  labs(title = "Monthly return of each of the stocks", x = "Monthly return [$]", y = "Frequency")
+
 
 ```
 
@@ -436,8 +439,9 @@ myStocks_returns_monthly %>%
             sd_monthly_return = sd(monthly_returns)) %>% 
   ggplot(aes(y=sd_monthly_return, x=mean_monthly_return, label = symbol)) + 
   geom_point() +
-  geom_text_repel()
-  #to add labs
+  geom_text_repel()+
+  labs(title = "The risk of each of the stocks expressed as standard deviation", x = "Monthly return [$]", y = "Standard deviation [$]")
+  
 
 
 >>>>>>> 0aeca28a1e8e1c803966fe15d91d2db059c8b00c
