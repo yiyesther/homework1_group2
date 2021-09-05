@@ -811,7 +811,9 @@ vac_pop_plot + annotate("text", x = 0.1,y = 0.89, label = "Herd Immunity Thresho
 
 # Challenge 2: Opinion polls for the 2021 German elections
 
-The Guardian newspaper has an [election poll tracker for the upcoming German election](https://www.theguardian.com/world/2021/aug/20/german-election-poll-tracker-who-will-be-the-next-chancellor).
+The Guardian newspaper has an [election poll tracker for the upcoming German election](
+
+).
 The list of the opinion polls since Jan 2021 can be found at [Wikipedia](https://en.wikipedia.org/wiki/Opinion_polling_for_the_2021_German_federal_election) and your task is to reproduce the graph similar to the one produced by the Guardian. 
 
 
@@ -880,6 +882,8 @@ Check minus (1/5): Displays minimal effort. Doesn't complete all components. Cod
 Check (3/5): Solid effort. Hits all the elements. No clear mistakes. Easy to follow (both the code and the output). 
 
 Check plus (5/5): Finished all components of the assignment correctly and addressed both challenges. Code is well-documented (both self-documented and with additional comments as necessary). Used tidyverse, instead of base R. Graphs and tables are properly labelled. Analysis is clear and easy to follow, either because graphs are labeled clearly or you've written additional text to describe how you interpret the output.
+
+
 
 
 
