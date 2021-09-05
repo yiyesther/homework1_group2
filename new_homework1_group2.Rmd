@@ -756,27 +756,61 @@ population <- vroom(population_url) %>%
 
 ```
 
-```{r,replicate_plot}
-vaccinations <- na.omit(vaccinations)
-vaccination_data <- vaccinations %>% 
-  filter(date == "09/04/2021") %>% 
-  select(fips, recip_county, series_complete_yes,series_complete_pop_pct) %>% 
-  arrange(fips)
 
-vaccination_pct <- left_join(vaccination_data,population, by = "fips") 
-  
+First we look at the data if there's missing values.
+```{r,skimchallenge2}
+skim(election2020_results)
+#We can see that there are 9 missing values. 
+```
+We need to clean up the missing values. 
+```{r}
+#remove missing values
+election2020_results <- na.omit(election2020_results)
+
+```
+
+Then, calculate the rate of votes for Trump in each county. 
+
+```{r, vote rate}
 vote_data <- election2020_results %>% 
   select(county_name, fips, candidate, candidatevotes, totalvotes) %>% 
   filter(candidate == "DONALD J TRUMP") %>% 
   group_by(county_name, fips, totalvotes) %>% 
   summarise(vote_sum = sum(candidatevotes)) %>% 
   mutate(vote_rate = vote_sum/totalvotes)
+```
+
+Then, filter the most recent data from vaccinations, in this case, september data.
+
+```{r}
+sept_vaccinations <- vaccinations %>% 
+  select(date, fips,series_complete_pop_pct) %>% 
+  filter(date == "09/04/2021")
+
+#After we filtered the dataset, we can conduct cleaning so that the code is more efficient regarding to a smaller dataset.
+sept_vaccinations <- na.omit(sept_vaccinations) %>% 
+  unique()
+```
+
+Next, join the september vaccination percentage to the percentage of votes for each county by each candidate.
 
 
+```{r}
 
-vac_pop <- inner_join(vaccination_pct, vote_data, by = "fips") 
-#vac_pop$vaccination_rate <- percent(vac_pop$vaccination_rate, accuracy=1)
-#vac_pop$vote_rate <- percent(vac_pop$vote_rate, accuracy=1)
+pct_trump_votes_vacc <- inner_join (vote_data, 
+                               sept_vaccinations , 
+                               by="fips")
+
+```
+
+Next, join the population size for each county into the percentage trump votes vaccination table.
+
+```{r}
+
+votes_vacc_pop <- inner_join (pct_trump_votes_vacc, 
+                               population , 
+                               by="fips")
+####to filter out the 0-values
 
 ```
 
@@ -791,8 +825,19 @@ vac_pop_plot <- vac_pop %>%
   geom_hline(yintercept=0.508, linetype="dashed") +
   labs(title = "COVID 19 VACCINATION LEVELS OUT OF TOTAL POPULATION BY COUNTY", subtitle = "(most states based on FULLY vaccinated only; CA, GA, IA, MI & TX based on total doses administered) 
        Data via Centres for Disease Control, COVID Act Now, state health depts Graph by Charles Gaba / ACASignups.net",x = "2020 Trump Vote %", y = "% of Total Population Vaccinated")+
+  theme_bw()+
+  annotate("text", x = 0.18,y = 0.89, label = "Herd Immunity Threshold (?)", fontface = 'italic',color = 'blue',size = 3) +
+  annotate("text", x = 0.13, y = 0.56, label = "TARGET:53.9%", fontface = 'italic', color = 'blue',size = 3) +
+  annotate("text", x = 0.13, y = 0.525, label = "ACTUAL:50.8%", fontface = 'italic', color = 'blue',size = 3)+
+  annotate("text", x = 0.4, y = 0.1, label = "09/04/2021", fontface = 'italic', color = 'red') +
+  annotate("text", x = 0.2, y = 0.1, label = "y = -0.4224x + 0.6451", color = 'red',size = 3) +
+  annotate("text", x = 0.2, y = 0.06, label = deparse(bquote(~R^2 ==~ 0.4216)),
+            parse = T, size = 3, color = 'red')+
+  annotate("text", x = 0.45, y = 1, label = "EVERY US COUNTY", size = 6) +
+  theme(legend.position = "none")
+  
   NULL
-
+vac_pop_plot
 ```
 
 ```{r,text}
@@ -906,7 +951,7 @@ election_data = cbind(election_data,roll_mean_union=roll_mean_union,roll_mean_sp
 ```
 
 ```{r,challenge2_plot}
-colors = c("Union" = "black", "SPD" = "red3", "AfD" = "midnightblue", "FDP" = "orange1",
+colors = c("CDU/CSU" = "black", "SPD" = "red3", "AfD" = "midnightblue", "FDP" = "orange1",
           "Linke" = "mediumvioletred", "Grune" = "green")
 
 election_data %>% 
@@ -917,18 +962,19 @@ election_data %>%
   geom_point(aes(y = average_rate_fdp), color="orange1", alpha=0.3, size=1)+
   geom_point(aes(y = average_rate_linke), color="mediumvioletred", alpha=0.3, size=1)+
   geom_point(aes(y = average_rate_grune), color="green", alpha=0.3, size=1)+
-  geom_line(aes(y = roll_mean_union, color="Union"), size=1) + 
+  geom_line(aes(y = roll_mean_union, color="CDU/CSU"), size=1) + 
   geom_line(aes(y = roll_mean_spd, color="SPD"),size=1) +
-  geom_line(aes(y = roll_mean_af_d),size=1)+
-  geom_line(aes(y = roll_mean_fdp),size=1)+
-  geom_line(aes(y = roll_mean_linke),size=1)+
-  geom_line(aes(y = roll_mean_grune),size=1)+
+  geom_line(aes(y = roll_mean_af_d, color="AfD"),size=1)+
+  geom_line(aes(y = roll_mean_fdp, color="FDP"),size=1)+
+  geom_line(aes(y = roll_mean_linke, color="Linke"),size=1)+
+  geom_line(aes(y = roll_mean_grune,  color="Grune"),size=1)+
   labs(title = "German Election Poll", x="Date", y="Percentage of vote")+
   scale_y_continuous(labels = scales::percent)+
   scale_x_date(labels = date_format("%B-%Y"))+
-  theme(legend.position = "top",legend.background = element_rect(fill="lightblue", 
+  theme(legend.position = "right",legend.background = element_rect(fill="snow", 
                                   size=0.5, linetype="solid")) +
-  scale_color_manual(values = colors)
+  theme_bw()+
+  scale_color_manual(values = colors, name = "Parties")
 
 
 ```
