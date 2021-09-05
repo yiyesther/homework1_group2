@@ -1,0 +1,95 @@
+First we look at the data if there's missing values.
+```{r}
+skim(election2020_results)
+#We can see that there are 9 missing values. 
+```
+We need to clean up the missing values. 
+```{r}
+#remove missing values
+election2020_results <- na.omit(election2020_results)
+
+```
+
+Then, calculate the rate of votes for Trump in each county. 
+
+```{r, vote rate}
+vote_data <- election2020_results %>% 
+  select(county_name, fips, candidate, candidatevotes, totalvotes) %>% 
+  filter(candidate == "DONALD J TRUMP") %>% 
+  group_by(county_name, fips, totalvotes) %>% 
+  summarise(vote_sum = sum(candidatevotes)) %>% 
+  mutate(vote_rate = vote_sum/totalvotes)
+```
+
+Then, filter the most recent data from vaccinations, in this case, september data.
+
+```{r}
+sept_vaccinations <- vaccinations %>% 
+  select(date, fips,series_complete_pop_pct) %>% 
+  filter(date == "09/04/2021")
+
+#After we filtered the dataset, we can conduct cleaning so that the code is more efficient regarding to a smaller dataset.
+sept_vaccinations <- na.omit(sept_vaccinations) %>% 
+  unique()
+```
+
+Next, join the september vaccination percentage to the percentage of votes for each county by each candidate.
+
+
+```{r}
+
+pct_trump_votes_vacc <- inner_join (vote_data, 
+                               sept_vaccinations , 
+                               by="fips")
+
+```
+
+Next, join the population size for each county into the percentage trump votes vaccination table.
+
+```{r}
+
+votes_vacc_pop <- inner_join (pct_trump_votes_vacc, 
+                               population , 
+                               by="fips")
+####to filter out the 0-values
+
+```
+
+Then, plot the relationship between percentage of trump vote and percentage of population vaccinated.
+
+```{r}
+vac_pop_plot <- votes_vacc_pop %>% 
+  ggplot(aes(x=vote_rate,y=series_complete_pop_pct/100, size=pop_estimate_2019)) + 
+  
+  #fit a regression line to the plot
+  geom_smooth(method=lm) + 
+  
+  #aethetics for population size
+  geom_point(color = "black", alpha = .6) +
+  scale_size(range = c(0, 30)) +
+  
+  #draw the dash lines
+  geom_hline(yintercept=0.85, linetype="dashed") +
+  geom_hline(yintercept=0.539, linetype="dashed") +
+  geom_hline(yintercept=0.508, linetype="dashed") +
+  
+  #break the graph into 3x3 grids with solid lines
+  geom_hline(yintercept=0.4, linetype="solid") +
+  geom_hline(yintercept=0.6, linetype="solid") +
+  geom_vline(xintercept=0.4, linetype="solid") +
+  geom_vline(xintercept=0.6, linetype="solid") +
+  labs(title = "COVID 19 VACCINATION LEVELS OUT OF TOTAL POPULATION BY COUNTY", 
+       x = "2020 Trump Vote %", 
+       y = "% of Total Population Vaccinated") +
+  NULL
+
+#add the text messages
+vac_pop_plot + annotate("text", x = 0.1,y = 0.89, label = "Herd Immunity Threshold (?)",color = 'blue',size = 3) +
+  annotate("text", x = 0.05, y = 0.56, label = "TARGET:53.9%", fontface = 'italic', color = 'blue',size = 3) +
+  annotate("text", x = 0.05, y = 0.525, label = "ACTUAL:50.8%", fontface = 'italic', color = 'blue',size = 3)+
+  annotate("text", x = 0.2, y = 0.1, label = "09/04/2021", fontface = 'italic', color = 'red') +
+  annotate("text", x = 0.45, y = 1, label = "EVERY U.S. COUNTY", size = 6) +
+  scale_y_continuous(labels = scales::percent)+
+  scale_x_continuous(labels = scales::percent, limits = c(0,1))
+
+```
