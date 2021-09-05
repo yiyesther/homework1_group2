@@ -772,7 +772,7 @@ vote_data <- election2020_results %>%
 
 
 
-vac_pop <- inner_join(vaccination_data, vote_data, by = "fips") 
+vac_pop <- inner_join(vaccination_pct, vote_data, by = "fips") 
 #vac_pop$vaccination_rate <- percent(vac_pop$vaccination_rate, accuracy=1)
 #vac_pop$vote_rate <- percent(vac_pop$vote_rate, accuracy=1)
 
@@ -781,8 +781,9 @@ vac_pop <- inner_join(vaccination_data, vote_data, by = "fips")
 
 ```{r,vaccination}
 vac_pop_plot <- vac_pop %>% 
-  ggplot(aes(x=vote_rate,y=series_complete_pop_pct/100)) + 
-  geom_point() +
+  ggplot(aes(x=vote_rate,y=series_complete_pop_pct/100, size = pop_estimate_2019)) + 
+  geom_point(size = 0.1) +
+  geom_point(alpha = 0.3)+
   geom_hline(yintercept=0.85, linetype="dashed") +
   geom_hline(yintercept=0.539, linetype="dashed") +
   geom_hline(yintercept=0.508, linetype="dashed") +
@@ -799,7 +800,8 @@ vac_pop_plot + annotate("text", x = 0.1,y = 0.89, label = "Herd Immunity Thresho
   annotate("text", x = 0.2, y = 0.1, label = "09/04/2021", fontface = 'italic', color = 'red') +
   annotate("text", x = 0.45, y = 1, label = "EVERY US COUNTY", size = 6) +
   scale_y_continuous(labels = scales::percent)+
-  scale_x_continuous(labels = scales::percent, limits = c(0,1))
+  scale_x_continuous(labels = scales::percent, limits = c(0,1))+
+  theme(legend.position = "none")
   
 ```
 
@@ -852,6 +854,52 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
 ```
 
 
+```{r,challenge2}
+
+glimpse(german_election_polls)
+
+```
+
+
+```{r,challenge2}
+
+selected_data <- german_election_polls %>% 
+  select (samplesize, union, spd, af_d, fdp, linke, grune, end_date)
+#selecting the columns that are useful
+
+selected_data$samplesize <- as.numeric(gsub(",","",selected_data$samplesize)) 
+#change "samplesize" to double
+
+election_data_raw <- selected_data %>% 
+  mutate (number_of_vote_union = samplesize*union/100, number_of_vote_spd = samplesize*spd/100, number_of_vote_af_d = samplesize*af_d/100, number_of_vote_fdp = samplesize*fdp/100, number_of_vote_linke = samplesize*linke/100, number_of_vote_grune = samplesize*grune/100) %>% 
+  #calculate the number of votes for each party (sample size*percenrage of vote)
+  group_by(end_date) %>% 
+  mutate (totalsample = sum(samplesize)) %>% 
+  #the total sample size of the result given by each company on the same date 
+  mutate (sum_vote_union = sum(number_of_vote_union), sum_vote_spd = sum(number_of_vote_spd), sum_vote_af_d = sum(number_of_vote_af_d), sum_vote_fdp = sum(number_of_vote_fdp), sum_vote_linke = sum(number_of_vote_linke), sum_vote_grune = sum(number_of_vote_grune)) %>% 
+  mutate (average_rate_union = sum_vote_union/totalsample, average_rate_spd = sum_vote_spd/totalsample, average_rate_af_d = sum_vote_af_d/totalsample, average_rate_fdp = sum_vote_fdp/totalsample, average_rate_linke = sum_vote_linke/totalsample, average_rate_grune = sum_vote_grune/totalsample)
+  #calculate the average percentage of vote by using the total number of votes for the party / the total sample size
+
+election_data <- election_data_raw[!duplicated(election_data_raw$totalsample), ]
+#remove the duplicated rows for the same date
+```
+
+```{r,challenge2_plot}
+
+election_data %>% 
+  ggplot(aes(x = end_date))+
+  geom_line(aes(y = average_rate_union), color = "black") + 
+  geom_line(aes(y = average_rate_spd), color="red3") +
+  geom_line(aes(y = average_rate_af_d), color="midnightblue")+
+  geom_line(aes(y = average_rate_fdp), color="orange1")+
+  geom_line(aes(y = average_rate_linke), color="mediumvioletred")+
+  geom_line(aes(y = average_rate_grune), color="green")+
+  labs(title = "German Election Poll", x="Date", y="Percentage of vote")+
+  theme(legend.position = "top",legend.background = element_rect(fill="lightblue", 
+                                  size=0.5, linetype="solid"))
+
+
+```
 
 
 # Deliverables
