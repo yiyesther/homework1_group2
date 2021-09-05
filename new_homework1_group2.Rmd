@@ -336,7 +336,7 @@ companies_per_sector %>%
 ```
 ```{r,companies_per_sector}
 
-
+colnames(companies_per_sector) <- c("sector", "number_of_companies")
 
 companies_per_sector %>% 
   ggplot(aes(reorder(sector,-number_of_companies), number_of_companies)) +
@@ -344,7 +344,6 @@ companies_per_sector %>%
   labs(title = "Number of companies in each sector", x = "Sector", y = "Number of Companies")+
   NULL
 
-colnames(companies_per_sector) <- c("sector", "number_of_companies")
 
 ```
 
@@ -640,7 +639,6 @@ hr_cleaned %>%
   labs(title = "Relationship between monthly income and education", x = "Education", y = "Monthly income") +
   NULL
 
-income_edu
 ```
 ```{r,q4gender}
 income_gender <- hr_cleaned %>% 
@@ -765,7 +763,6 @@ vaccination_data <- vaccinations %>%
 
 vaccination_pct <- left_join(vaccination_data,population, by = "fips") 
   
-
 vote_data <- election2020_results %>% 
   select(county_name, fips, candidate, candidatevotes, totalvotes) %>% 
   filter(candidate == "DONALD J TRUMP") %>% 
@@ -789,7 +786,8 @@ vac_pop_plot <- vac_pop %>%
   geom_hline(yintercept=0.85, linetype="dashed") +
   geom_hline(yintercept=0.539, linetype="dashed") +
   geom_hline(yintercept=0.508, linetype="dashed") +
-  labs(title = "COVID 19 VACCINATION LEVELS OUT OF TOTAL POPULATION BY COUNTY", x = "2020 Trump Vote %", y = "% of Total Population Vaccinated")+
+  labs(title = "COVID 19 VACCINATION LEVELS OUT OF TOTAL POPULATION BY COUNTY", subtitle = "(most states based on FULLY vaccinated only; CA, GA, IA, MI & TX based on total doses administered) 
+       Data via Centres for Disease Control, COVID Act Now, state health depts Graph by Charles Gaba / ACASignups.net",x = "2020 Trump Vote %", y = "% of Total Population Vaccinated")+
   NULL
 
 ```
@@ -805,9 +803,6 @@ vac_pop_plot + annotate("text", x = 0.1,y = 0.89, label = "Herd Immunity Thresho
   
 ```
 
-```{r,final_plot}
-
-```
 
 # Challenge 2: Opinion polls for the 2021 German elections
 
