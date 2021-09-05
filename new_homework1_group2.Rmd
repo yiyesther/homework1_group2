@@ -45,6 +45,8 @@ library(rvest) # to scrape wikipedia page
 library(kableExtra)
 library("ggpubr")
 library("scales")
+library("smooth")
+library(zoo)
 ```
 
 
@@ -883,20 +885,50 @@ election_data_raw <- selected_data %>%
 election_data <- election_data_raw[!duplicated(election_data_raw$totalsample), ]
 #remove the duplicated rows for the same date
 ```
+```{r,challenge2function}
+election_data = na.omit(election_data)
+
+roll_mean_union = zoo::rollmean(election_data$average_rate_union,k = 14, fill = NA, align = "left")
+
+roll_mean_spd = zoo::rollmean(election_data$average_rate_spd,k = 14, fill = NA, align = "left")
+
+roll_mean_af_d = zoo::rollmean(election_data$average_rate_af_d,k = 14, fill = NA, align = "left")
+
+roll_mean_fdp = zoo::rollmean(election_data$average_rate_fdp,k = 14, fill = NA, align = "left")
+
+roll_mean_linke = zoo::rollmean(election_data$average_rate_linke,k = 14, fill = NA, align = "left")
+
+roll_mean_grune= zoo::rollmean(election_data$average_rate_grune,k = 14, fill = NA, align = "left")
+election_data = cbind(election_data,roll_mean_union=roll_mean_union,roll_mean_spd=roll_mean_spd,
+                      roll_mean_af_d=roll_mean_af_d,roll_mean_fdp=roll_mean_fdp,
+                      roll_mean_linke=roll_mean_linke,roll_mean_grune=roll_mean_grune)
+
+```
 
 ```{r,challenge2_plot}
+colors = c("Union" = "black", "SPD" = "red3", "AfD" = "midnightblue", "FDP" = "orange1",
+          "Linke" = "mediumvioletred", "Grune" = "green")
 
 election_data %>% 
   ggplot(aes(x = end_date))+
-  geom_line(aes(y = average_rate_union), color = "black") + 
-  geom_line(aes(y = average_rate_spd), color="red3") +
-  geom_line(aes(y = average_rate_af_d), color="midnightblue")+
-  geom_line(aes(y = average_rate_fdp), color="orange1")+
-  geom_line(aes(y = average_rate_linke), color="mediumvioletred")+
-  geom_line(aes(y = average_rate_grune), color="green")+
+  geom_point(aes(y = average_rate_union), alpha=0.3, size=1) + 
+  geom_point(aes(y = average_rate_spd), color="red3", alpha=0.3, size=1) +
+  geom_point(aes(y = average_rate_af_d), color="midnightblue", alpha=0.3, size=1)+
+  geom_point(aes(y = average_rate_fdp), color="orange1", alpha=0.3, size=1)+
+  geom_point(aes(y = average_rate_linke), color="mediumvioletred", alpha=0.3, size=1)+
+  geom_point(aes(y = average_rate_grune), color="green", alpha=0.3, size=1)+
+  geom_line(aes(y = roll_mean_union, color="Union"), size=1) + 
+  geom_line(aes(y = roll_mean_spd, color="SPD"),size=1) +
+  geom_line(aes(y = roll_mean_af_d),size=1)+
+  geom_line(aes(y = roll_mean_fdp),size=1)+
+  geom_line(aes(y = roll_mean_linke),size=1)+
+  geom_line(aes(y = roll_mean_grune),size=1)+
   labs(title = "German Election Poll", x="Date", y="Percentage of vote")+
+  scale_y_continuous(labels = scales::percent)+
+  scale_x_date(labels = date_format("%B-%Y"))+
   theme(legend.position = "top",legend.background = element_rect(fill="lightblue", 
-                                  size=0.5, linetype="solid"))
+                                  size=0.5, linetype="solid")) +
+  scale_color_manual(values = colors)
 
 
 ```
