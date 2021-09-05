@@ -43,6 +43,8 @@ library(vroom)
 library(tidyquant)
 library(rvest) # to scrape wikipedia page
 library(kableExtra)
+library("ggpubr")
+library("scales")
 ```
 
 
@@ -244,7 +246,6 @@ dist_by_genre %>%
 
 ```{r, dist_by_genre}
 
-##not sure if this is correct##
 unique_movies %>%
   ggplot(aes(x=rating)) + 
   geom_histogram() +
@@ -533,13 +534,175 @@ hr_cleaned <- hr_dataset %>%
 Produce a one-page summary describing this dataset. Here is a non-exhaustive list of questions:
 
 1. How often do people leave the company (`attrition`)
-1. How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics? 
-1. How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
-1. Is there any relationship between monthly income and education? Monthly income and gender?
-1. Plot a boxplot of income vs job role. Make sure the highest-paid job roles appear first
-1. Calculate and plot a bar chart of the mean (or median?) income by education level.
-1. Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
-1. Plot income vs age, faceted by `job_role`
+
+```{r,attrition}
+leave_count <- hr_cleaned %>% 
+  select(attrition) %>%
+  group_by(attrition) %>% 
+  summarise(attrition_count = count(attrition))
+
+leave_count %>%
+  ggplot(aes(x=attrition,y=attrition_count)) + 
+  geom_col() +
+  labs(title = "Number of people who leave the company expressed as attrition", x = "Attrition", y = "Count")+
+  NULL
+
+
+```
+```{r,attrition_rate}
+
+leave_count[2,2]/sum(leave_count$attrition_count)
+
+# 16.1% of the people in this survey leave the company.
+
+```
+
+2. How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics? 
+
+```{r,employee_info}
+employee_info <- hr_cleaned %>% 
+  select(age, years_at_company, monthly_income, years_since_last_promotion) 
+
+age_plot <- ggplot(employee_info, aes(x=age)) + 
+  geom_density() +
+  labs(title = "Density plot of employees' age", x = "Age", y = "Density")+
+  NULL
+
+years_plot <- ggplot(employee_info, aes(x=years_at_company)) + 
+  geom_density() +
+  labs(title = "Density plot of how long employees have stayed in the company", x = "Years at company", y = "Density")+
+  NULL
+
+income_plot <- ggplot(employee_info, aes(x=monthly_income)) + 
+  geom_density() +
+  labs(title = "Density plot of employees' monthly income", x = "Monthly income", y = "Density")+
+  NULL
+
+promotion_plot <- ggplot(employee_info, aes(x=years_since_last_promotion)) + 
+  geom_density() +
+  labs(title = "Density plot of how long it has been since employees' are last promoted", x = "Years since last promotion", y = "Density")+
+  NULL
+
+ggarrange(age_plot,years_plot,income_plot,promotion_plot, ncol=2, nrow=2)
+```
+
+```{r,attrition}
+
+#By looking at the above plots, the "age_plot" is closer to normal distribution.
+
+```
+
+3. How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
+
+```{r,q3}
+job_satis_dist <- hr_cleaned %>% 
+  select(job_satisfaction) %>%
+  group_by(job_satisfaction) %>%
+  summarise(cnt = n()) %>%
+  mutate(freq = percent(cnt / sum(cnt)))
+  
+
+  
+job_satis_dist %>% 
+  ggplot(aes(reorder(job_satisfaction,-cnt), cnt)) +
+  geom_bar(stat="identity")+
+  geom_text(aes(label = freq), vjust = 1.5, colour = "white")+
+  labs(title = "Distribution of job satisfaction", x="Job satisfaction", y="Count")+
+  NULL 
+  
+```
+
+```{r,q3work}
+work_life_dist <- hr_cleaned %>% 
+  select(work_life_balance) %>%
+  group_by(work_life_balance) %>%
+  summarise(cnt = n()) %>%
+  mutate(freq = percent(cnt / sum(cnt)))
+  
+
+  
+work_life_dist %>% 
+  ggplot(aes(reorder(work_life_balance,-cnt), cnt)) +
+  geom_bar(stat="identity")+
+  geom_text(aes(label = freq), vjust = 1.5, colour = "white")+
+  labs(title = "Distribution of work life balance", x="Work life balance", y="Count")+
+  NULL 
+  
+  
+```
+4. Is there any relationship between monthly income and education? Monthly income and gender?
+
+```{r,q4education}
+hr_cleaned %>% 
+  select(education,monthly_income) %>% 
+  ggplot(aes(x=education, y=monthly_income)) +
+  geom_boxplot()+
+  labs(title = "Relationship between monthly income and education", x = "Education", y = "Monthly income") +
+  NULL
+
+income_edu
+```
+```{r,q4gender}
+income_gender <- hr_cleaned %>% 
+  group_by(gender) %>% 
+  ggplot(aes(x=gender, y=monthly_income)) +
+  geom_boxplot()+
+  labs(title = "Relationship between monthly income and gender", x = "Gender", y = "Monthly income") +
+  NULL
+
+income_gender
+```
+5. Plot a boxplot of income vs job role. Make sure the highest-paid job roles appear first
+
+```{r,q5}
+hr_cleaned %>% 
+  mutate(job_role = fct_rev(fct_reorder(job_role, monthly_income, median))) %>% 
+  ggplot(aes(x=job_role, y=monthly_income)) +
+  geom_boxplot()+
+  labs(title = "Relationship between monthly income and job role", x = "Job role", y = "Mean monthly income") +
+  NULL
+```
+
+6. Calculate and plot a bar chart of the mean (or median?) income by education level.
+
+```{r,q6}
+income_edu <- hr_cleaned %>% 
+  group_by(education) %>% 
+  summarise(mean_income = mean(monthly_income)) %>% 
+  ggplot(aes(x=education, y=mean_income)) +
+  geom_col()+
+  labs(title = "Relationship between monthly income and education", x = "Education", y = "Mean monthly income") +
+  NULL
+
+income_edu
+
+```
+
+7. Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
+
+```{r,q7}
+hr_cleaned %>% 
+  ggplot(aes(x=monthly_income)) +
+  ggthemes::theme_wsj() +
+  geom_density() +
+  facet_wrap(vars(education)) +
+  labs(title = "Distribution of monthly income by education level", x = "Education", y = "Density") +
+  NULL
+
+```
+
+8. Plot income vs age, faceted by `job_role`
+
+```{r,q5}
+
+hr_cleaned %>% 
+  ggplot(aes(y=monthly_income, x=age)) +
+  geom_point() +
+  facet_wrap(vars(job_role))+
+  labs(title = "Relationship between income and age", x = "Age", y = "Monthly income") +
+  NULL
+```
+
 
 
 # Challenge 1: Replicating a chart
@@ -593,6 +756,58 @@ population <- vroom(population_url) %>%
 
 ```
 
+```{r,replicate_plot}
+vaccinations <- na.omit(vaccinations)
+vaccination_data <- vaccinations %>% 
+  filter(date == "09/04/2021") %>% 
+  select(fips, recip_county, series_complete_yes,series_complete_pop_pct) %>% 
+  arrange(fips)
+
+vaccination_pct <- left_join(vaccination_data,population, by = "fips") 
+  
+
+vote_data <- election2020_results %>% 
+  select(county_name, fips, candidate, candidatevotes, totalvotes) %>% 
+  filter(candidate == "DONALD J TRUMP") %>% 
+  group_by(county_name, fips, totalvotes) %>% 
+  summarise(vote_sum = sum(candidatevotes)) %>% 
+  mutate(vote_rate = vote_sum/totalvotes)
+
+
+
+vac_pop <- inner_join(vaccination_data, vote_data, by = "fips") 
+#vac_pop$vaccination_rate <- percent(vac_pop$vaccination_rate, accuracy=1)
+#vac_pop$vote_rate <- percent(vac_pop$vote_rate, accuracy=1)
+
+```
+
+
+```{r,vaccination}
+vac_pop_plot <- vac_pop %>% 
+  ggplot(aes(x=vote_rate,y=series_complete_pop_pct/100)) + 
+  geom_point() +
+  geom_hline(yintercept=0.85, linetype="dashed") +
+  geom_hline(yintercept=0.539, linetype="dashed") +
+  geom_hline(yintercept=0.508, linetype="dashed") +
+  labs(title = "COVID 19 VACCINATION LEVELS OUT OF TOTAL POPULATION BY COUNTY", x = "2020 Trump Vote %", y = "% of Total Population Vaccinated")+
+  NULL
+
+```
+
+```{r,text}
+vac_pop_plot + annotate("text", x = 0.1,y = 0.89, label = "Herd Immunity Threshold (?)", fontface = 'italic',color = 'blue',size = 3) +
+  annotate("text", x = 0.05, y = 0.56, label = "TARGET:53.9%", fontface = 'italic', color = 'blue',size = 3) +
+  annotate("text", x = 0.05, y = 0.525, label = "ACTUAL:50.8%", fontface = 'italic', color = 'blue',size = 3)+
+  annotate("text", x = 0.2, y = 0.1, label = "09/04/2021", fontface = 'italic', color = 'red') +
+  annotate("text", x = 0.45, y = 1, label = "EVERY US COUNTY", size = 6) +
+  scale_y_continuous(labels = scales::percent)+
+  scale_x_continuous(labels = scales::percent, limits = c(0,1))
+  
+```
+
+```{r,final_plot}
+
+```
 
 # Challenge 2: Opinion polls for the 2021 German elections
 
