@@ -42,6 +42,8 @@ library(httr)
 library(readxl)
 library(vroom)
 library(infer)
+library("scales")
+library(dplyr)
 ```
 
 
@@ -433,6 +435,11 @@ knitr::include_graphics(here::here("images", "tfl_distributions_monthly.png"), e
 
 Look at May and Jun and compare 2020 with the previous years. What's happening?
 
+* According to the above graph, most of the months are of a right skewed distribution while May and June are close to a normal distribution. Being right skewed means that the average bike rental value is smaller than that of which distribution is normal. During summer, it is both predicted that bike rentals go up, and this explains the observation for May and June in this graph. It can also be seen that for the lower hire counts, their frequencies are very low. This indicates that bike rental was so popular that the very few low hire counts were observed.
+
+* For year 2020, the pandemic obviously had heavily struck the bike rental industry. Overall, the frequency of renting a bike has decreased significantly compared to the other years. However, it is interesting to find that for the lower hire counts in May and June, their frequency increased in 2020 with regard to previous years. As it gets less popular for people to go out and rent bikes, the lower hire counts would appear more frequently than before. In fact, all the plots for 2020 are more right skewed than they were in the other years, as the data set shifted to lower hire counts due to the pandemic.
+
+
 However, the challenge I want you to work on is to reproduce the following two graphs.
 
 ```{r tfl_absolute_monthly_change, echo=FALSE, out.width="100%"}
@@ -469,6 +476,7 @@ skim(bike)
 
 ```{r}
 #Prepare the dataframe for the first graph (monthly bike rental)
+bike$day = as.Date(bike$day)
 
 #filter the data for 2016-2019
 history_bike <- bike %>% 
@@ -477,7 +485,7 @@ history_bike <- bike %>%
 #calculate the overall monthly average between 2016-2019 as benchmark
 expected_bike_pcm <- history_bike %>% 
   group_by(month) %>% 
-  summarise(expected_rentals = mean(bikes_hired))
+  summarise(expected_rental = mean(bikes_hired))
 
 #calculate the excess rentals and percentage for 2016-2021
 #excess_rentals = actual_rentals - expected_rentals
@@ -486,9 +494,13 @@ actual_bike_pcm <- bike %>%
   group_by(year,month) %>% 
   summarise(actual_rental = mean(bikes_hired)) %>% 
   left_join(expected_bike_pcm, by = "month") %>% 
-  mutate(excess_rentals = actual_rental - expected_rentals)
+  mutate(excess_rentals = actual_rental - expected_rental)
+```
+```{r,replacemonth}
+actual_bike_pcm$month_num <- match(actual_bike_pcm$month,month.abb)
 
 ```
+
 
 ```{r}
 #Prepare the dataframe for the second graph (weekly bike rental)
@@ -505,10 +517,23 @@ actual_bike_pw <- bike %>%
   summarise(actual_rental = mean(bikes_hired)) %>% 
   left_join(expected_bike_pw, by = "week") %>% 
   mutate(excess_rentals = actual_rental - expected_rentals, 
-         excess_rentals_pct = percent(excess_rentals/expected_rentals))
+         excess_rentals_pct = percent(excess_rentals/expected_rentals)) %>% 
+  pivot_longer(cols = 3:4, names_to = "Rental", values_to = "year")
 
 ```
 
+```{r,challenge1_plot}
+actual_bike_pcm <-  actual_bike_pcm %>% 
+  mutate(actual_larger_expected = ifelse(actual_rental>expected_rental, "Yes", "No"))
+
+actual_bike_pcm %>% 
+  ggplot(aes(x = month)) +
+  geom_line(aes(y = actual_rental, group = 1), color = "black")+
+  geom_line(aes(y = expected_rental, group = 1), color = "blue", size = 0.7)+
+  geom_ribbon(aes(ymin = actual_rental,ymax = expected_rental), fill="red", alpha=0.5) +
+  facet_wrap(~year)
+
+```
 
 # Deliverables
 
