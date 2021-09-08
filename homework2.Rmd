@@ -305,6 +305,34 @@ Can we estimate the *population* proportion of Snapchat or Instagram users in 20
 1. Calculate the proportion of Yes’s for `snap_insta` among those who answered the question, i.e. excluding NAs.
 1. Using the CI formula for proportions, please construct 95% CIs for men and women who used either Snapchat or Instagram
 
+```{r}
+temp_gss <- gss %>% 
+   mutate(snap_insta = case_when(
+    snapchat == "Yes" | instagrm == "Yes" ~ "Yes",
+    snapchat == "NA" | instagrm == "NA" ~ "NA",
+    TRUE ~ "No"
+  ))
+```
+
+```{r}
+prop_gss <- temp_gss %>% 
+  filter(snap_insta != "NA") %>% 
+  count(snap_insta) %>% 
+  mutate(prop = n/sum(n))
+```
+
+```{r}
+prop_gss %>% 
+  group_by(prop) %>% 
+  summarise(mean_delta = mean(prop),
+            sd_delta = sd(prop, na.rm=TRUE),
+            count_delta = n(),
+            se_delta = sd_delta / sqrt(count_delta),
+            ci_delta_up = mean_delta + qt(.975, count_delta-1)*se_delta ,
+            ci_delta_dw = mean_delta - qt(.975, count_delta-1)*se_delta 
+            )
+```
+
 ## Twitter, by education level
 
 Can we estimate the *population* proportion of Twitter users by education level in 2016?. 
