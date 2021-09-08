@@ -306,6 +306,12 @@ Can we estimate the *population* proportion of Snapchat or Instagram users in 20
 1. Using the CI formula for proportions, please construct 95% CIs for men and women who used either Snapchat or Instagram
 
 ```{r}
+glimpse(temp_gss)
+glimpse(prop_gss)
+```
+
+
+```{r}
 temp_gss <- gss %>% 
    mutate(snap_insta = case_when(
     snapchat == "Yes" | instagrm == "Yes" ~ "Yes",
@@ -319,17 +325,21 @@ prop_gss <- temp_gss %>%
   filter(snap_insta != "NA") %>% 
   count(snap_insta) %>% 
   mutate(prop = n/sum(n))
+
 ```
 
+
 ```{r}
-prop_gss %>% 
-  group_by(prop) %>% 
-  summarise(mean_delta = mean(prop),
-            sd_delta = sd(prop, na.rm=TRUE),
-            count_delta = n(),
-            se_delta = sd_delta / sqrt(count_delta),
-            ci_delta_up = mean_delta + qt(.975, count_delta-1)*se_delta ,
-            ci_delta_dw = mean_delta - qt(.975, count_delta-1)*se_delta 
+temp_gss %>% 
+  filter(snap_insta != "NA") %>% 
+  mutate(snap_insta = snap_insta == "Yes") %>% 
+  group_by(sex) %>% 
+  summarise(mean_prop = mean(snap_insta),
+            sd_prop = sd(snap_insta),
+            count_prop = n(),
+            se_prop = sd_prop / sqrt(count_prop),
+            ci_prop_up = mean_prop + qt(.975, count_prop-1)*se_prop ,
+            ci_prop_dw = mean_prop - qt(.975, count_prop-1)*se_prop 
             )
 ```
 
@@ -344,6 +354,10 @@ There are 5 education levels in variable `degree` which, in ascneding order of y
 1. Calculate the proportion of `bachelor_graduate` who do (Yes) and who don't (No) use twitter. 
 1. Using the CI formula for proportions, please construct two 95% CIs for `bachelor_graduate` vs whether they use (Yes) and don't (No) use twitter. 
 1. Do these two Confidence Intervals overlap?
+
+```{r}
+
+```
 
 
 ## Email usage
@@ -379,6 +393,18 @@ Also, please add an orange line at zero. Your plot should look like this:
 knitr::include_graphics(here::here("images", "biden_approval_margin.png"), error = FALSE)
 ```
 
+```{r}
+glimpse(approval_polllist)
+```
+
+```{r}
+approval_polllist$enddate <- mdy(approval_polllist$enddate)
+new_approval <- approval_polllist %>% 
+  filter(subgroup=="Voters") %>% 
+  mutate(net_approve = approve - disapprove, year = year(enddate), week = week(enddate))
+```
+
+$H_0: \mu_A - \mu_B \neq 0$
 ## Compare Confidence Intervals
 
 Compare the confidence intervals for `week 3` and `week 25`. Can you explain what's going on? One paragraph would be enough.
