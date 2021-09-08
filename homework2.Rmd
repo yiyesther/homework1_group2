@@ -517,8 +517,7 @@ actual_bike_pw <- bike %>%
   summarise(actual_rental = mean(bikes_hired)) %>% 
   left_join(expected_bike_pw, by = "week") %>% 
   mutate(excess_rentals = actual_rental - expected_rentals, 
-         excess_rentals_pct = percent(excess_rentals/expected_rentals)) %>% 
-  pivot_longer(cols = 3:4, names_to = "Rental", values_to = "year")
+         excess_rentals_pct = percent(excess_rentals/expected_rentals)) 
 
 ```
 
@@ -526,13 +525,15 @@ actual_bike_pw <- bike %>%
 actual_bike_pcm <-  actual_bike_pcm %>% 
   mutate(actual_larger_expected = ifelse(actual_rental>expected_rental, "Yes", "No"))
 
-actual_bike_pcm %>% 
+month_plot <- actual_bike_pcm %>% 
   ggplot(aes(x = month)) +
   geom_line(aes(y = actual_rental, group = 1), color = "black")+
   geom_line(aes(y = expected_rental, group = 1), color = "blue", size = 0.7)+
-  geom_ribbon(aes(ymin = actual_rental,ymax = expected_rental), fill="red", alpha=0.5) +
+  geom_ribbon(data=subset(actual_bike_pcm, month = c("Jan","Feb")), 
+          aes(ymin=actual_rental,ymax=expected_rental), fill="blue", alpha=0.5) +
   facet_wrap(~year)
 
+month_plot
 ```
 
 # Deliverables
