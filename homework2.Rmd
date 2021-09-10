@@ -236,8 +236,6 @@ formula_ci <- comparison %>%
             ci_delta_dw = mean_delta - qt(.975, count_delta-1)*se_delta 
             )
             
-            
-
   # choose the interval 2011-present
   # what dplyr verb will you use? 
 
@@ -256,23 +254,26 @@ print(formula_ci)
 
 set.seed(1)
 
+#Calculate the CI for the relevant interval...
+#2011 - present
+
 boot_weather_1 <- comparison %>%
-  filter(interval == "1881-1920") %>% 
+  filter(interval == "2011-present") %>% 
   specify(response = delta) %>% 
   generate(reps=100, type="bootstrap") %>% 
   calculate(stat = "mean")
 
-percentile_ci_1 <- boot_weather_1 %>% 
+percentile_ci_1<- boot_weather_1 %>% 
   get_confidence_interval(level = 0.95, type = "percentile")
-
 print(percentile_ci_1)
 
-#repeat for other intervals
-  
+
 
 ```
 
 > What is the data showing us? Please type your answer after (and outside!) this blockquote. You have to explain what you have done, and the interpretation of the result. One paragraph max, please!
+
+
 
 # General Social Survey (GSS)
 
