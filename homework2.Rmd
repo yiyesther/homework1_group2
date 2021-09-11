@@ -476,7 +476,7 @@ print(median_email)
 
 gss_email2 %>%
   ggplot(aes(x=as.numeric(email)))+ 
-  geom_histogram(breaks = seq(min(as.numeric(email)), max(as.numeric(email)), 100)) +
+  geom_histogram(breaks = seq(min(as.numeric(gss_email2$email)), max(as.numeric(gss_email2$email)), 100)) +
   
   labs(title = "Weekly Email Usage for Americans", x = "Email Minutes", y = "Count (Frequency)") +
   NULL
