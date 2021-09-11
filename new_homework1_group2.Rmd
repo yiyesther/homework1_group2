@@ -43,6 +43,10 @@ library(vroom)
 library(tidyquant)
 library(rvest) # to scrape wikipedia page
 library(kableExtra)
+library("ggpubr")
+library("scales")
+library("smooth")
+library(zoo)
 ```
 
 
@@ -244,7 +248,6 @@ dist_by_genre %>%
 
 ```{r, dist_by_genre}
 
-##not sure if this is correct##
 unique_movies %>%
   ggplot(aes(x=rating)) + 
   geom_histogram() +
@@ -335,7 +338,7 @@ companies_per_sector %>%
 ```
 ```{r,companies_per_sector}
 
-
+colnames(companies_per_sector) <- c("sector", "number_of_companies")
 
 companies_per_sector %>% 
   ggplot(aes(reorder(sector,-number_of_companies), number_of_companies)) +
@@ -343,7 +346,6 @@ companies_per_sector %>%
   labs(title = "Number of companies in each sector", x = "Sector", y = "Number of Companies")+
   NULL
 
-colnames(companies_per_sector) <- c("sector", "number_of_companies")
 
 ```
 
@@ -533,8 +535,37 @@ hr_cleaned <- hr_dataset %>%
 Produce a one-page summary describing this dataset. Here is a non-exhaustive list of questions:
 
 1. How often do people leave the company (`attrition`)
+<<<<<<< HEAD
 1. How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics? 
 ```{r}
+=======
+
+```{r,attrition}
+leave_count <- hr_cleaned %>% 
+  select(attrition) %>%
+  group_by(attrition) %>% 
+  summarise(attrition_count = count(attrition))
+
+leave_count %>%
+  ggplot(aes(x=attrition,y=attrition_count)) + 
+  geom_col() +
+  labs(title = "Number of people who leave the company expressed as attrition", x = "Attrition", y = "Count")+
+  NULL
+
+
+```
+```{r,attrition_rate}
+
+leave_count[2,2]/sum(leave_count$attrition_count)
+
+# 16.1% of the people in this survey leave the company.
+
+```
+
+2. How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics? 
+
+```{r,employee_info}
+>>>>>>> 6cbfb9a38e747b451c09eb5b4540b0cad64b19f3
 employee_info <- hr_cleaned %>% 
   select(age, years_at_company, monthly_income, years_since_last_promotion) 
 
@@ -557,21 +588,43 @@ promotion_plot <- ggplot(employee_info, aes(x=years_since_last_promotion)) +
   geom_density() +
   labs(title = "Density plot of how long it has been since employees' are last promoted", x = "Years since last promotion", y = "Density")+
   NULL
+<<<<<<< HEAD
 ```
 
 1. How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
 ```{r}
 
+=======
+
+ggarrange(age_plot,years_plot,income_plot,promotion_plot, ncol=2, nrow=2)
+```
+
+```{r,attrition}
+
+#By looking at the above plots, the "age_plot" is closer to normal distribution.
+
+```
+
+3. How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
+
+```{r,q3}
+>>>>>>> 6cbfb9a38e747b451c09eb5b4540b0cad64b19f3
 job_satis_dist <- hr_cleaned %>% 
   select(job_satisfaction) %>%
   group_by(job_satisfaction) %>%
   summarise(cnt = n()) %>%
+<<<<<<< HEAD
   mutate(freq = percent (cnt / sum(cnt) * 100))
+=======
+  mutate(freq = percent(cnt / sum(cnt)))
+  
+>>>>>>> 6cbfb9a38e747b451c09eb5b4540b0cad64b19f3
 
   
 job_satis_dist %>% 
   ggplot(aes(reorder(job_satisfaction,-cnt), cnt)) +
   geom_bar(stat="identity")+
+<<<<<<< HEAD
   labs(title = "job satisfaction", x = "job_satisfaction", y = "cnt")+
   NULL #to add the percentage as column "freq"
 
@@ -582,6 +635,104 @@ job_satis_dist %>%
 1. Calculate and plot a bar chart of the mean (or median?) income by education level.
 1. Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
 1. Plot income vs age, faceted by `job_role`
+=======
+  geom_text(aes(label = freq), vjust = 1.5, colour = "white")+
+  labs(title = "Distribution of job satisfaction", x="Job satisfaction", y="Count")+
+  NULL 
+  
+```
+
+```{r,q3work}
+work_life_dist <- hr_cleaned %>% 
+  select(work_life_balance) %>%
+  group_by(work_life_balance) %>%
+  summarise(cnt = n()) %>%
+  mutate(freq = percent(cnt / sum(cnt)))
+  
+
+  
+work_life_dist %>% 
+  ggplot(aes(reorder(work_life_balance,-cnt), cnt)) +
+  geom_bar(stat="identity")+
+  geom_text(aes(label = freq), vjust = 1.5, colour = "white")+
+  labs(title = "Distribution of work life balance", x="Work life balance", y="Count")+
+  NULL 
+  
+  
+```
+4. Is there any relationship between monthly income and education? Monthly income and gender?
+
+```{r,q4education}
+hr_cleaned %>% 
+  select(education,monthly_income) %>% 
+  ggplot(aes(x=education, y=monthly_income)) +
+  geom_boxplot()+
+  labs(title = "Relationship between monthly income and education", x = "Education", y = "Monthly income") +
+  NULL
+
+```
+```{r,q4gender}
+income_gender <- hr_cleaned %>% 
+  group_by(gender) %>% 
+  ggplot(aes(x=gender, y=monthly_income)) +
+  geom_boxplot()+
+  labs(title = "Relationship between monthly income and gender", x = "Gender", y = "Monthly income") +
+  NULL
+
+income_gender
+```
+5. Plot a boxplot of income vs job role. Make sure the highest-paid job roles appear first
+
+```{r,q5}
+hr_cleaned %>% 
+  mutate(job_role = fct_rev(fct_reorder(job_role, monthly_income, median))) %>% 
+  ggplot(aes(x=job_role, y=monthly_income)) +
+  geom_boxplot()+
+  labs(title = "Relationship between monthly income and job role", x = "Job role", y = "Mean monthly income") +
+  NULL
+```
+
+6. Calculate and plot a bar chart of the mean (or median?) income by education level.
+
+```{r,q6}
+income_edu <- hr_cleaned %>% 
+  group_by(education) %>% 
+  summarise(mean_income = mean(monthly_income)) %>% 
+  ggplot(aes(x=education, y=mean_income)) +
+  geom_col()+
+  labs(title = "Relationship between monthly income and education", x = "Education", y = "Mean monthly income") +
+  NULL
+
+income_edu
+
+```
+
+7. Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
+
+```{r,q7}
+hr_cleaned %>% 
+  ggplot(aes(x=monthly_income)) +
+  ggthemes::theme_wsj() +
+  geom_density() +
+  facet_wrap(vars(education)) +
+  labs(title = "Distribution of monthly income by education level", x = "Education", y = "Density") +
+  NULL
+
+```
+
+8. Plot income vs age, faceted by `job_role`
+
+```{r,q5}
+
+hr_cleaned %>% 
+  ggplot(aes(y=monthly_income, x=age)) +
+  geom_point() +
+  facet_wrap(vars(job_role))+
+  labs(title = "Relationship between income and age", x = "Age", y = "Monthly income") +
+  NULL
+```
+
+>>>>>>> 6cbfb9a38e747b451c09eb5b4540b0cad64b19f3
 
 
 # Challenge 1: Replicating a chart
@@ -797,6 +948,90 @@ pct_trump_votes_vacc_pop %>%
 ```
 
 
+First we look at the data if there's missing values.
+```{r,skimchallenge2}
+skim(election2020_results)
+#We can see that there are 9 missing values. 
+```
+We need to clean up the missing values. 
+```{r}
+#remove missing values
+election2020_results <- na.omit(election2020_results)
+
+```
+
+Then, calculate the rate of votes for Trump in each county. 
+
+```{r, vote rate}
+vote_data <- election2020_results %>% 
+  select(county_name, fips, candidate, candidatevotes, totalvotes) %>% 
+  filter(candidate == "DONALD J TRUMP") %>% 
+  group_by(county_name, fips, totalvotes) %>% 
+  summarise(vote_sum = sum(candidatevotes)) %>% 
+  mutate(vote_rate = vote_sum/totalvotes)
+```
+
+Then, filter the most recent data from vaccinations, in this case, september data.
+
+```{r}
+sept_vaccinations <- vaccinations %>% 
+  select(date, fips,series_complete_pop_pct) %>% 
+  filter(date == "09/04/2021")
+
+#After we filtered the dataset, we can conduct cleaning so that the code is more efficient regarding to a smaller dataset.
+sept_vaccinations <- na.omit(sept_vaccinations) %>% 
+  unique()
+```
+
+Next, join the september vaccination percentage to the percentage of votes for each county by each candidate.
+
+
+```{r}
+
+pct_trump_votes_vacc <- inner_join (vote_data, 
+                               sept_vaccinations , 
+                               by="fips")
+
+```
+
+Next, join the population size for each county into the percentage trump votes vaccination table.
+
+```{r}
+
+votes_vacc_pop <- inner_join (pct_trump_votes_vacc, 
+                               population , 
+                               by="fips")
+####to filter out the 0-values
+
+```
+
+
+```{r,vaccination}
+vac_pop_plot <- vac_pop %>% 
+  ggplot(aes(x=vote_rate,y=series_complete_pop_pct/100, size = pop_estimate_2019)) + 
+  geom_point(size = 0.1) +
+  geom_point(alpha = 0.3)+
+  geom_hline(yintercept=0.85, linetype="dashed") +
+  geom_hline(yintercept=0.539, linetype="dashed") +
+  geom_hline(yintercept=0.508, linetype="dashed") +
+  labs(title = "COVID 19 VACCINATION LEVELS OUT OF TOTAL POPULATION BY COUNTY", subtitle = "(most states based on FULLY vaccinated only; CA, GA, IA, MI & TX based on total doses administered) 
+       Data via Centres for Disease Control, COVID Act Now, state health depts Graph by Charles Gaba / ACASignups.net",x = "2020 Trump Vote %", y = "% of Total Population Vaccinated")+
+  theme_bw()+
+  annotate("text", x = 0.18,y = 0.89, label = "Herd Immunity Threshold (?)", fontface = 'italic',color = 'blue',size = 3) +
+  annotate("text", x = 0.13, y = 0.56, label = "TARGET:53.9%", fontface = 'italic', color = 'blue',size = 3) +
+  annotate("text", x = 0.13, y = 0.525, label = "ACTUAL:50.8%", fontface = 'italic', color = 'blue',size = 3)+
+  annotate("text", x = 0.4, y = 0.1, label = "09/04/2021", fontface = 'italic', color = 'red') +
+  annotate("text", x = 0.2, y = 0.1, label = "y = -0.4224x + 0.6451", color = 'red',size = 3) +
+  annotate("text", x = 0.2, y = 0.06, label = deparse(bquote(~R^2 ==~ 0.4216)),
+            parse = T, size = 3, color = 'red')+
+  annotate("text", x = 0.45, y = 1, label = "EVERY US COUNTY", size = 6) +
+  theme(legend.position = "none")
+  
+  NULL
+vac_pop_plot
+```
+
+
 # Challenge 2: Opinion polls for the 2021 German elections
 
 The Guardian newspaper has an [election poll tracker for the upcoming German election](https://www.theguardian.com/world/2021/aug/20/german-election-poll-tracker-who-will-be-the-next-chancellor).
@@ -846,6 +1081,83 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
 glimpse(german_election_polls)
 ```
 
+```{r,challenge2}
+
+glimpse(german_election_polls)
+
+```
+
+
+```{r,challenge2}
+
+selected_data <- german_election_polls %>% 
+  select (samplesize, union, spd, af_d, fdp, linke, grune, end_date)
+#selecting the columns that are useful
+
+selected_data$samplesize <- as.numeric(gsub(",","",selected_data$samplesize)) 
+#change "samplesize" to double
+
+election_data_raw <- selected_data %>% 
+  mutate (number_of_vote_union = samplesize*union/100, number_of_vote_spd = samplesize*spd/100, number_of_vote_af_d = samplesize*af_d/100, number_of_vote_fdp = samplesize*fdp/100, number_of_vote_linke = samplesize*linke/100, number_of_vote_grune = samplesize*grune/100) %>% 
+  #calculate the number of votes for each party (sample size*percenrage of vote)
+  group_by(end_date) %>% 
+  mutate (totalsample = sum(samplesize)) %>% 
+  #the total sample size of the result given by each company on the same date 
+  mutate (sum_vote_union = sum(number_of_vote_union), sum_vote_spd = sum(number_of_vote_spd), sum_vote_af_d = sum(number_of_vote_af_d), sum_vote_fdp = sum(number_of_vote_fdp), sum_vote_linke = sum(number_of_vote_linke), sum_vote_grune = sum(number_of_vote_grune)) %>% 
+  mutate (average_rate_union = sum_vote_union/totalsample, average_rate_spd = sum_vote_spd/totalsample, average_rate_af_d = sum_vote_af_d/totalsample, average_rate_fdp = sum_vote_fdp/totalsample, average_rate_linke = sum_vote_linke/totalsample, average_rate_grune = sum_vote_grune/totalsample)
+  #calculate the average percentage of vote by using the total number of votes for the party / the total sample size
+
+election_data <- election_data_raw[!duplicated(election_data_raw$totalsample), ]
+#remove the duplicated rows for the same date
+```
+```{r,challenge2function}
+election_data = na.omit(election_data)
+
+roll_mean_union = zoo::rollmean(election_data$average_rate_union,k = 14, fill = NA, align = "left")
+
+roll_mean_spd = zoo::rollmean(election_data$average_rate_spd,k = 14, fill = NA, align = "left")
+
+roll_mean_af_d = zoo::rollmean(election_data$average_rate_af_d,k = 14, fill = NA, align = "left")
+
+roll_mean_fdp = zoo::rollmean(election_data$average_rate_fdp,k = 14, fill = NA, align = "left")
+
+roll_mean_linke = zoo::rollmean(election_data$average_rate_linke,k = 14, fill = NA, align = "left")
+
+roll_mean_grune= zoo::rollmean(election_data$average_rate_grune,k = 14, fill = NA, align = "left")
+election_data = cbind(election_data,roll_mean_union=roll_mean_union,roll_mean_spd=roll_mean_spd,
+                      roll_mean_af_d=roll_mean_af_d,roll_mean_fdp=roll_mean_fdp,
+                      roll_mean_linke=roll_mean_linke,roll_mean_grune=roll_mean_grune)
+
+```
+
+```{r,challenge2_plot}
+colors = c("CDU/CSU" = "black", "SPD" = "red3", "AfD" = "midnightblue", "FDP" = "orange1",
+          "Linke" = "mediumvioletred", "Grune" = "green")
+
+election_data %>% 
+  ggplot(aes(x = end_date))+
+  geom_point(aes(y = average_rate_union), alpha=0.3, size=1) + 
+  geom_point(aes(y = average_rate_spd), color="red3", alpha=0.3, size=1) +
+  geom_point(aes(y = average_rate_af_d), color="midnightblue", alpha=0.3, size=1)+
+  geom_point(aes(y = average_rate_fdp), color="orange1", alpha=0.3, size=1)+
+  geom_point(aes(y = average_rate_linke), color="mediumvioletred", alpha=0.3, size=1)+
+  geom_point(aes(y = average_rate_grune), color="green", alpha=0.3, size=1)+
+  geom_line(aes(y = roll_mean_union, color="CDU/CSU"), size=1) + 
+  geom_line(aes(y = roll_mean_spd, color="SPD"),size=1) +
+  geom_line(aes(y = roll_mean_af_d, color="AfD"),size=1)+
+  geom_line(aes(y = roll_mean_fdp, color="FDP"),size=1)+
+  geom_line(aes(y = roll_mean_linke, color="Linke"),size=1)+
+  geom_line(aes(y = roll_mean_grune,  color="Grune"),size=1)+
+  labs(title = "German Election Poll", x="Date", y="Percentage of vote")+
+  scale_y_continuous(labels = scales::percent)+
+  scale_x_date(labels = date_format("%B-%Y"))+
+  theme(legend.position = "right",legend.background = element_rect(fill="snow", 
+                                  size=0.5, linetype="solid")) +
+  theme_bw()+
+  scale_color_manual(values = colors, name = "Parties")
+
+
+```
 
 ```{r,challenge2}
 selected_data <- german_election_polls %>% 
@@ -959,6 +1271,8 @@ Check minus (1/5): Displays minimal effort. Doesn't complete all components. Cod
 Check (3/5): Solid effort. Hits all the elements. No clear mistakes. Easy to follow (both the code and the output). 
 
 Check plus (5/5): Finished all components of the assignment correctly and addressed both challenges. Code is well-documented (both self-documented and with additional comments as necessary). Used tidyverse, instead of base R. Graphs and tables are properly labelled. Analysis is clear and easy to follow, either because graphs are labeled clearly or you've written additional text to describe how you interpret the output.
+
+
 
 
 
