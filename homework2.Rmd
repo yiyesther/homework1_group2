@@ -344,21 +344,99 @@ temp_gss %>%
             )
 ```
 
+
+
 ## Twitter, by education level
 
 Can we estimate the *population* proportion of Twitter users by education level in 2016?. 
 
-There are 5 education levels in variable `degree` which, in ascneding order of years of education, are Lt high school, High School, Junior college, Bachelor, Graduate. 
+There are 5 education levels in variable `degree` which, in ascending order of years of education, are Lt high school, High School, Junior college, Bachelor, Graduate. 
 
 1. Turn `degree` from a character variable into a factor variable. Make sure the order is the correct one and that levels are not sorted alphabetically which is what R by default does. 
-1. Create a  new variable, `bachelor_graduate` that is *Yes* if the respondent has either a `Bachelor` or `Graduate` degree. As before, if the recorded value for either was NA, the value in your new variable should also be NA.
-1. Calculate the proportion of `bachelor_graduate` who do (Yes) and who don't (No) use twitter. 
-1. Using the CI formula for proportions, please construct two 95% CIs for `bachelor_graduate` vs whether they use (Yes) and don't (No) use twitter. 
-1. Do these two Confidence Intervals overlap?
+2. Create a  new variable, `bachelor_graduate` that is *Yes* if the respondent has either a `Bachelor` or `Graduate` degree. As before, if the recorded value for either was NA, the value in your new variable should also be NA.
+3. Calculate the proportion of `bachelor_graduate` who do (Yes) and who don't (No) use twitter. 
+4. Using the CI formula for proportions, please construct two 95% CIs for `bachelor_graduate` vs whether they use (Yes) and don't (No) use twitter. 
+5. Do these two Confidence Intervals overlap?
+
 
 ```{r}
+#Question 1 - Change 'degree' from character variable to factor variable. 
+#Levels not sorted alphabetically... 
+
+gss2 <- gss
+gss2$degree[gss2$degree == "Lt high school"] <- '1'
+gss2$degree[gss2$degree == "High school"] <- '2'
+gss2$degree[gss2$degree == "Junior college"] <- '3'
+gss2$degree[gss2$degree == "Bachelor"] <- '4'
+gss2$degree[gss2$degree == "Graduate"] <- '5'
+
+gss2$degree <- as_factor(gss2$degree)
+
+head(gss2,5)
+```
+
+
+```{r}
+#Question 2 - Create New Variable - 'bachelor_graduate' 
+gss3 <- gss %>% 
+   mutate(bachelor_graduate = case_when(
+    degree == 'Bachelor' | degree == 'Graduate' ~ "*Yes*",
+    degree == "NA" ~ "NA",
+    TRUE ~ "*No*"
+  ))
+
+head(gss3,5)
+```
+
+
+```{r}
+#Question 3 - Calculate the proportion of bachelor_graduate that do and do not use twitter...
+gss_twitter_prop <- gss3 %>% 
+  filter(bachelor_graduate == "*Yes*") %>% 
+  filter(twitter != "NA") %>%
+  count(twitter) %>% 
+  mutate(Proportion = n/sum(n) * 100) 
+
+colnames(gss_twitter_prop) = c("Twitter", "Number", "Proportion [%]")
+print(gss_twitter_prop)
+```
+
+```{r}
+#Question 4 - Construct 95% CIs for the proportions of bachelor_graduates that use twitter.
+
+gss3 %>% 
+  filter(bachelor_graduate == "*Yes*") %>% 
+  filter(twitter != "NA") %>%
+  mutate(twitter = twitter == "Yes") %>% 
+  summarise(Mean_prop = mean(twitter),
+            SD_prop = sd(twitter),
+            Count_prop = n(),
+            SE_prop = SD_prop / sqrt(Count_prop),
+            Upper_CI_prop = Mean_prop + qt(.975, Count_prop-1)*SE_prop ,
+            Lower_CI_prop = Mean_prop - qt(.975, Count_prop-1)*SE_prop 
+            )
+
+gss3 %>% 
+  filter(bachelor_graduate == "*Yes*") %>% 
+  filter(twitter != "NA") %>%
+  mutate(twitter = twitter == "No") %>% 
+  summarise(Mean_prop = mean(twitter),
+            SD_prop = sd(twitter),
+            Count_prop = n(),
+            SE_prop = SD_prop / sqrt(Count_prop),
+            Upper_CI_prop = Mean_prop + qt(.975, Count_prop-1)*SE_prop ,
+            Lower_CI_prop = Mean_prop - qt(.975, Count_prop-1)*SE_prop 
+            )
 
 ```
+
+Question 5:
+The Confidence Intervals for the proportions of bachelor and graduate students that do and do not use Twitter do NOT overlap. As a result of this, we can say with great confidence that a much larger proportion of bachelor/graduate students do not use twitter (when compared to those that do). 
+
+
+
+
+
 
 
 ## Email usage
@@ -366,9 +444,89 @@ There are 5 education levels in variable `degree` which, in ascneding order of y
 Can we estimate the *population* parameter on time spent on email weekly?
 
 1. Create a new variable called `email` that combines `emailhr` and `emailmin` to reports the number of minutes the respondents spend on email weekly.
-1. Visualise the distribution of this new variable. Find the mean and the median number of minutes respondents spend on email weekly. Is the mean or the median a better measure of the typical amoung of time Americans spend on email weekly? Why?
-1. Using the `infer` package, calculate a 95% bootstrap confidence interval for the mean amount of time Americans spend on email weekly. Interpret this interval in context of the data, reporting its endpoints in “humanized” units (e.g. instead of 108 minutes, report 1 hr and 8 minutes). If you get a result that seems a bit odd, discuss why you think this might be the case.
-1. Would you expect a 99% confidence interval to be wider or narrower than the interval you calculated above? Explain your reasoning.
+2. Visualise the distribution of this new variable. Find the mean and the median number of minutes respondents spend on email weekly. Is the mean or the median a better measure of the typical amount of time Americans spend on email weekly? Why?
+3. Using the `infer` package, calculate a 95% bootstrap confidence interval for the mean amount of time Americans spend on email weekly. Interpret this interval in context of the data, reporting its endpoints in “humanized” units (e.g. instead of 108 minutes, report 1 hr and 8 minutes). If you get a result that seems a bit odd, discuss why you think this might be the case.
+4. Would you expect a 99% confidence interval to be wider or narrower than the interval you calculated above? Explain your reasoning.
+
+
+```{r}
+#Question 1 - New variable called email...
+gss_email <- gss 
+
+gss_email <- transform(gss_email, email = ifelse(gss_email$emailhr != "NA" | gss_email$emailmin != "NA", (as.numeric(gss_email$emailmin) + 60*as.numeric(gss_email$emailhr)), "NA"))
+
+head(gss_email,5)
+
+```
+
+
+
+```{r}
+#Question 2 - Visualize this distribution and find the mean + median amount of time Americans spend on email...
+
+gss_email2 <- gss_email %>% 
+  filter(email != "NA")
+  gss_email2$email <- as.numeric(gss_email2$email)
+
+  
+mean_email <- mean(gss_email2$email)
+median_email <- median(gss_email2$email)
+print(mean_email)
+print(median_email)
+
+gss_email2 %>%
+  ggplot(aes(x=as.numeric(email)))+ 
+  geom_histogram(breaks = seq(min(as.numeric(email)), max(as.numeric(email)), 100)) +
+  
+  labs(title = "Weekly Email Usage for Americans", x = "Email Minutes", y = "Count (Frequency)") +
+  NULL
+
+```
+
+Question 2 continued... As we can see the distribution is very skewed to the right (positively skewed). Because of the way the arithmetic mean is calculated, large positive outliers (that are clearly present in this distribution) will produce a large, biased mean. In this instance, the median is probably a better "average value", because it is not distorted by (biased to) the large positive outliers. 
+
+
+```{r, calculate_emailCI_using_bootstrap}
+
+#Question 3 - Using the `infer` package, calculate a 95% bootstrap confidence interval for the mean amount of time Americans spend on email weekly.
+# Use the infer package to construct a 95% CI for delta
+
+set.seed(1234)
+
+boot_gss <- gss_email2 %>%
+  specify(response = email) %>% 
+  generate(reps=100, type="bootstrap") %>% 
+  calculate(stat = "mean")
+
+email_ci_1 <- boot_gss %>% 
+  get_confidence_interval(level = 0.95, type = "percentile")
+
+Hours = email_ci_1 %/% 60
+Minutes = email_ci_1 %% 60
+
+email_ci_humanized[c(1)] <- Hours[c(1)]
+email_ci_humanized[c(2)] <- Minutes[c(1)]
+email_ci_humanized[c(3)] <- Hours[c(2)]
+email_ci_humanized[c(4)] <- Minutes[c(2)]
+
+colnames(email_ci_humanized) = c("Lower CI Hours", "Lower CI Minutes", "Upper CI Hours", "Upper CI Minutes")
+print(email_ci_humanized)
+
+```
+
+This result seems fairly reasonable. The confidence interval perhaps seems fairly wide, given the large number of data points, but this caould be due to the fact that there is large variation in the data, and that large positive outlying values (of which there are a few), will introduce bias and largely affect the mean. 
+
+
+
+
+Question 4 - Would you expect a 99% confidence interval to be wider or narrower than the interval you calculated above? Explain your reasoning. 
+
+We would expect the 99% confidence interval to be wider than the 95% interval. This is because the confidence interval is formulated using the Z/t level, which increases when you look for an interval of greater confidence. For example, the critical Z-value for a confidence interval of 95% is 1.96, but this value would be 2.58 for a 99% confidence interval. Because this critical value is multiplied by the standard error to form the confidence interval, we can expect the interval for 99% confidence to be wider. This is intuitive, because increasing the size of a given region naturally increases our confidence that the mean lies within this specified region/location. 
+
+
+
+
+
 
 
 # Biden's Approval Margins
