@@ -126,7 +126,18 @@ Make a boxplot of `physical_3plus` vs. `weight`. Is there a relationship between
 
 ```{r, boxplot}
 
+yrbssbox <- yrbss %>%
+  na.omit(yrbss$physical_3plus)
+  
+ggplot(yrbssbox, aes(x=physical_3plus, y=weight))+
+  geom_boxplot()+ 
+  labs(title = "Boxplot showing the distribution of weights for different exercise levels", x = "Exercise more than 3 times per week?", y = "Weight [kg]")
+
+
 ```
+
+This shows that the lower quartile, median and upper quartile weight of people who exercise more than 3 times per week is actually greater than that of people who exercise less than 3 times per week. We may have expected people who exercised more to on average weigh less, but the opposite seems to be true. This is because there could also be people not exercising who are particularly under-weight, bringing the average down. There could also be people exercising extremely regularly, but carrying large body mass - particularly if they do weight-lifting and other similar exercises on a regular basis. Overall there is not a huge difference between the two distributions, because of these factors. 
+
 
 ## Confidence Interval
 
