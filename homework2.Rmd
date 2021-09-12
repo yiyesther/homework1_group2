@@ -504,10 +504,8 @@ email_ci_1 <- boot_gss %>%
 Hours = email_ci_1 %/% 60
 Minutes = email_ci_1 %% 60
 
-email_ci_humanized[c(1)] <- Hours[c(1)]
-email_ci_humanized[c(2)] <- Minutes[c(1)]
-email_ci_humanized[c(3)] <- Hours[c(2)]
-email_ci_humanized[c(4)] <- Minutes[c(2)]
+email_ci_humanized <- c(Hours[c(1)], Minutes[c(1)], Hours[c(2)], Minutes[c(2)] )
+email_ci_humanized <- as.data.frame(email_ci_humanized)
 
 colnames(email_ci_humanized) = c("Lower CI Hours", "Lower CI Minutes", "Upper CI Hours", "Upper CI Minutes")
 print(email_ci_humanized)
