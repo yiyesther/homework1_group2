@@ -222,7 +222,7 @@ glimpse(brexit) # examine the data frame
 
 ```
 
-```{r}
+```{r,challenge1_plot}
 temp_brexit <- brexit %>% 
   select(con_2015, lab_2015, ld_2015, ukip_2015, leave_share) %>% 
   pivot_longer(cols = 1:4, names_to = "party", values_to = "party_percentage")
@@ -231,21 +231,14 @@ cols <- c("con_2015" = "#0087dc", "lab_2015" = "#d50000", "ld_2015" = "#FDBB30",
 
 temp_brexit %>% 
   ggplot(aes(x=party_percentage,y=leave_share, group=party, color=party)) +
-  geom_point()+
-  geom_smooth(method=lm)+
+  geom_point(size = 0.5, alpha = 0.2)+
+  geom_smooth(method=lm, size = 0.5)+
   labs(title = "How political affiliation translated to Brexit Voting", x = "Party % in the UK 2015 general election", y = "Leave % in the 2016 Brexit referendum")+
   scale_colour_manual(labels = c("Conservative", "Labour","Lib Dems","UKIP"), values = cols)+
   theme_bw()+
-  theme(legend.position = "bottom",plot.title = element_text(face = "bold", size = 16))+
+  theme(legend.position = "bottom",plot.title = element_text(face = "bold", size = 13))+
   theme(legend.title = element_blank())+
   NULL
-
-```
-
-
-
-
-```{r, challenge1}
 
 ```
 
