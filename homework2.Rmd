@@ -524,9 +524,6 @@ Also, please add an orange line at zero. Your plot should look like this:
 knitr::include_graphics(here::here("images", "biden_approval_margin.png"), error = FALSE)
 ```
 
-```{r}
-glimpse(approval_polllist)
-```
 
 ```{r}
 #prepare the dataset
