@@ -118,7 +118,7 @@ tidyweather <- tidyweather %>%
          year = year(date))
 
 ggplot(tidyweather, aes(x=date, y = delta))+
-  geom_point()+
+  geom_point(size = 0.8)+
   geom_smooth(color="red") +
   theme_bw() +
   labs (
@@ -133,13 +133,14 @@ Is the effect of increasing temperature more pronounced in some months? Use `fac
 
 #Your code goes here...
 ggplot(tidyweather, aes(x=date, y = delta))+
-  geom_point(size = 1)+
+  geom_point(size = 0.6)+
   geom_smooth(color="red") +
   theme_bw() +
   facet_wrap(~month) +
   labs (
     title = "Weather Anomalies"
-  )
+  )+
+  NULL
 
 ```
 
@@ -178,7 +179,8 @@ ggplot(comparison, aes(x=delta, fill=interval))+
   labs (
     title = "Density Plot for Monthly Temperature Anomalies",
     y     = "Density"         #changing y-axis label to sentence case
-  )
+  )+
+  NULL
 
 ```
 
@@ -306,11 +308,6 @@ Can we estimate the *population* proportion of Snapchat or Instagram users in 20
 1. Calculate the proportion of Yes’s for `snap_insta` among those who answered the question, i.e. excluding NAs.
 1. Using the CI formula for proportions, please construct 95% CIs for men and women who used either Snapchat or Instagram
 
-```{r}
-glimpse(temp_gss)
-glimpse(prop_gss)
-```
-
 
 ```{r}
 temp_gss <- gss %>% 
@@ -342,6 +339,10 @@ temp_gss %>%
             ci_prop_up = mean_prop + qt(.975, count_prop-1)*se_prop ,
             ci_prop_dw = mean_prop - qt(.975, count_prop-1)*se_prop 
             )
+```
+```{r}
+glimpse(temp_gss)
+glimpse(prop_gss)
 ```
 
 
@@ -430,11 +431,7 @@ gss3 %>%
 
 ```
 
-Question 5:
-The Confidence Intervals for the proportions of bachelor and graduate students that do and do not use Twitter do NOT overlap. As a result of this, we can say with great confidence that a much larger proportion of bachelor/graduate students do not use twitter (when compared to those that do). 
-
-
-
+* Question 5: The Confidence Intervals for the proportions of bachelor and graduate students that do and do not use Twitter do NOT overlap. As a result of this, we can say with great confidence that a much larger proportion of bachelor/graduate students do not use twitter (when compared to those that do). 
 
 
 
@@ -512,18 +509,14 @@ print(email_ci_humanized)
 
 ```
 
-This result seems fairly reasonable. The confidence interval perhaps seems fairly wide, given the large number of data points, but this caould be due to the fact that there is large variation in the data, and that large positive outlying values (of which there are a few), will introduce bias and largely affect the mean. 
+* This result seems fairly reasonable. The confidence interval perhaps seems fairly wide, given the large number of data points, but this caould be due to the fact that there is large variation in the data, and that large positive outlying values (of which there are a few), will introduce bias and largely affect the mean. 
 
 
 
 
 Question 4 - Would you expect a 99% confidence interval to be wider or narrower than the interval you calculated above? Explain your reasoning. 
 
-We would expect the 99% confidence interval to be wider than the 95% interval. This is because the confidence interval is formulated using the Z/t level, which increases when you look for an interval of greater confidence. For example, the critical Z-value for a confidence interval of 95% is 1.96, but this value would be 2.58 for a 99% confidence interval. Because this critical value is multiplied by the standard error to form the confidence interval, we can expect the interval for 99% confidence to be wider. This is intuitive, because increasing the size of a given region naturally increases our confidence that the mean lies within this specified region/location. 
-
-
-
-
+* We would expect the 99% confidence interval to be wider than the 95% interval. This is because the confidence interval is formulated using the Z/t level, which increases when you look for an interval of greater confidence. For example, the critical Z-value for a confidence interval of 95% is 1.96, but this value would be 2.58 for a 99% confidence interval. Because this critical value is multiplied by the standard error to form the confidence interval, we can expect the interval for 99% confidence to be wider. This is intuitive, because increasing the size of a given region naturally increases our confidence that the mean lies within this specified region/location. 
 
 
 
@@ -555,18 +548,101 @@ glimpse(approval_polllist)
 ```
 
 ```{r}
+#prepare the dataset
+
+#calculate the margin
 approval_polllist$enddate <- mdy(approval_polllist$enddate)
 new_approval <- approval_polllist %>% 
   filter(subgroup=="Voters") %>% 
   mutate(net_approve = approve - disapprove, year = year(enddate), week = week(enddate))
+
+glimpse(new_approval)
+
+```
+```{r}
+#calculate the CI for average approval margin
+
+margin_ci <- new_approval %>% 
+  group_by(week) %>% 
+  summarise(avg_approval_margin = mean(net_approve),
+            sd_margin = sd(net_approve, na.rm=TRUE),
+            count_margin = n(),
+            se_margin = sd_margin / sqrt(count_margin),
+            ci_margin_up = avg_approval_margin + qt(.975, count_margin-1)*se_margin ,
+            ci_margin_dw = avg_approval_margin - qt(.975, count_margin-1)*se_margin
+            )
+
+glimpse(margin_ci)
 ```
 
-$H_0: \mu_A - \mu_B \neq 0$
+```{r}
+#plot the for average approval margin
+margin_ci %>% 
+  ggplot(aes(week)) +
+  geom_ribbon(aes(ymin = ci_margin_up, ymax = ci_margin_dw), fill="grey", alpha = 0.5)+
+  geom_line(aes(y=avg_approval_margin, group=1), color = "red", size = 0.3) +
+  geom_point(aes(y=avg_approval_margin, group=1), color = "red", size  = 0.3) +
+  geom_smooth(aes(y=avg_approval_margin)) +
+  geom_line(aes(y=ci_margin_up, group=1), color="red", size = 0.3)+
+  geom_line(aes(y=ci_margin_dw, group=1), color="red", size = 0.3)+
+  
+  #add the aesthetics for the graph
+  geom_hline(yintercept=0, linetype="solid", color = "orange", size = 1)+
+  labs(title="Estimating Approval Margin (approve-disapprove) for Joe Biden",
+       subtitle = "Weekly average of all polls",
+       x = "Week of the year", 
+       y = "Average Approval Margin (Approve - Disapprove") +
+  annotate("text", x = 20, y = 20, label = "2021", color = 'black',size = 3)+
+  scale_y_continuous(
+    labels = scales::number_format(accuracy = 0.1))+
+  theme_minimal()+
+  NULL
+
+
+
+```
+
+
+
 ## Compare Confidence Intervals
 
 Compare the confidence intervals for `week 3` and `week 25`. Can you explain what's going on? One paragraph would be enough.
 
+```{r}
+#calculate the week4 and week5 confidence intervals
+margin_ci_comparison <- new_approval %>% 
+  filter(week==4 | week==25) %>% 
+  group_by(week) %>% 
+  summarise(avg_approval_margin = mean(net_approve),
+            sd_margin = sd(net_approve, na.rm=TRUE),
+            count_margin = n(),
+            se_margin = sd_margin / sqrt(count_margin),
+            ci_margin_up = avg_approval_margin + qt(.975, count_margin-1)*se_margin ,
+            ci_margin_dw = avg_approval_margin - qt(.975, count_margin-1)*se_margin
+            )
 
+#plot the confidence intervals
+margin_ci_comparison %>% 
+  ggplot(aes(x=avg_approval_margin, y=week, color=week))+
+  geom_errorbarh(aes(xmin=ci_margin_dw,xmax=ci_margin_up))+
+  geom_point(aes(x=avg_approval_margin, y=week), size=6)+
+  labs(title="Comparison of confidence intervals for week4 and week 25",
+       x = "Average approval margin", 
+       y = "Week")
+  
+
+#We can see that the average approval margin for week4 is larger than that in week25. However, the confidence interval in week4 [6.12, 19.4] and week25 [6.36, 11.5] overlap. Therefore, based on the confidence interval graphs generated below, we cannot tell if on average, Biden has significantly lower approval margin in week25 than that in week4.
+```
+
+
+```{r}
+comparison_approval <- new_approval %>% 
+  filter(week==4 | week==25)
+
+t.test(net_approve ~ week, data = comparison_approval)
+#Based on the result below, we cannot reject the null hypothesis. 
+
+```
 # Gapminder revisited
 
 Recall the `gapminder` data frame from the gapminder package. That data frame contains just six columns from the larger [data in Gapminder World](https://www.gapminder.org/data/). In this part, you will join a few dataframes with more data than the 'gapminder' package. Specifically, you will look at data on 
@@ -580,6 +656,12 @@ Recall the `gapminder` data frame from the gapminder package. That data frame co
 - HIV prevalence (adults_with_hiv_percent_age_15_49.csv): The estimated number of people living with HIV per 100 population of age group 15-49.
 
 You must use the `wbstats` package to download data from the World Bank. The relevant World Bank indicators are `SP.DYN.TFRT.IN`, `SE.PRM.NENR`, `NY.GDP.PCAP.KD`, and `SH.DYN.MORT`
+
+```{r}
+library(gapminder)
+skim(gapminder)
+```
+
 
 ```{r, get_data, cache=TRUE}
 
@@ -604,13 +686,237 @@ countries <-  wbstats::wb_cachelist$countries
 ```
 
 You have to join the 3 dataframes (life_expectancy, worldbank_data, and HIV) into one. You may need to tidy your data first and then perform [join operations](http://r4ds.had.co.nz/relational-data.html). Think about what type makes the most sense **and explain why you chose it**.
+* Left Join makes the most sense among the different types of join operations like outer joins - left, right, and full. This is because a left join operation (regardless of there being a match) preserves the original observations, especially when one looks up additional data from another table. Since, we are working with 3 dataframes, while mapping the year and date column with different start/end time frames, it is essential to preserve the original observations in each dataframe. 
+```{r}
+# tidying HIV data - hiv and life_expectancy dataframes - using pivot_longer() + remving NA values
+hiv1 <- hiv %>%
+  pivot_longer(2:34, names_to = "year", values_to = "Percentage_HIV_Cases_Age_15_49") %>% 
+  drop_na()
+skim(hiv1)
+life_expectancy_1 <- life_expectancy %>%
+  pivot_longer(2:302, names_to = "year", values_to = "Life_Expectancy") %>% 
+  drop_na()
+skim(life_expectancy_1)
+```
+
+```{r}
+#Removing NA values in worldbank_data
+worldbank_data_1 <- worldbank_data %>%
+  drop_na()
+skim(worldbank_data_1)
+```
+
+
+```{r}
+#Left Join of life_expectancy_1 (tidied life_expectancy) and hiv1 (tidied hiv) dataframes 
+join_1 <- left_join(life_expectancy_1, hiv1, by = c("country"="country", "year"="year"))
+# Converting datatype of column (year) from character type to numeric type
+join_1$year = as.numeric(join_1$year)
+```
+
+```{r}
+#Left Join of join_1 (left join of hiv1 and life_expectancy_1 dataframes) and worldbank_data dataframes
+join_2 <- left_join(join_1, worldbank_data_1, by = c("country"="country", "year"="date"))
+```
+
+```{r}
+#Left Join of join_1 (left join of hiv1 and life_expectancy_1 dataframes) and worldbank_data dataframes
+join_3 <- left_join(join_2, countries, "country"="country") %>%
+  drop_na()
+join_3
+```
 
 1. What is the relationship between HIV prevalence and life expectancy? Generate a scatterplot with a smoothing line to report your results. You may find faceting useful
-1. What is the relationship between fertility rate and GDP per capita? Generate a scatterplot with a smoothing line to report your results. You may find facetting by region useful
-1. Which regions have the most observations with missing HIV data? Generate a bar chart (`geom_col()`), in descending order.
-1. How has mortality rate for under 5 changed by region? In each region, find the top 5 countries that have seen the greatest improvement, as well as those 5 countries where mortality rates have had the least improvement or even deterioration.
-1. Is there a relationship between primary school enrollment and fertility rate?
+* Based on the scatterplot with a smoothing line, it seems like region plays a role in the relationship between HIV prevalence and life expectancy. HIV Prevalence is depicted through the percentage of HIV cases in the age group 15-49 years. In the case of Sub-Saharan Africa, there is a definite pattern of a negative slope which implies that as HIV prevalence increases, there is a decrease in Life Expectancy. In Latin America too, there is a negative slope implying an inverse relationship between HIV prevalence and Life Expectancy. However, there is more variability in the plot for Sub-Saharan Africa as compared to Latin America.
+```{r}
+#Scatterplot for Life Expectancy vs. HIV prevalence 
+ggplot(join_3, aes(x = Percentage_HIV_Cases_Age_15_49, y = Life_Expectancy)) +
+    geom_point(size = 0.3) +
+    geom_smooth(method="lm") +
+    facet_wrap(~ region) +
+    labs(title = "Relationship between HIV Prevalence and Life Expectancy", 
+         x = "HIV Prevalence",
+         y = "Life Expectancy")
+```
 
+1. What is the relationship between fertility rate and GDP per capita? Generate a scatterplot with a smoothing line to report your results. You may find facetting by region useful
+
+* Based on the scatterplot with a smoothing line, it seems like facetting by region solidifies the belief that all regions depict an inverse relationship between fertility rate and GDP per capita. In the case of Sub-Saharan Africa in particular, as the fertility rate increases, the GDP per capita decreases. The inverse relationship between the two variables demonstrates the connection between fertility choices and economic considerations. In general, developing or low-income countries tend to have higher levels of fertility than their developed counterparts for several reasons such as infant mortality, lack of access to contraceptives, generally lower levels of female education, etc.
+
+
+```{r}
+ggplot(join_3, aes(x = SP.DYN.TFRT.IN, y = NY.GDP.PCAP.KD)) +
+    geom_point() +
+    geom_smooth(method="lm") +
+    facet_wrap(~ region) +
+    labs(title = "Relationship between Fertility Rate and GDP per capita", 
+         x = "Fertility Rate",
+         y = "GDP per capita")
+```
+
+1. Which regions have the most observations with missing HIV data? Generate a bar chart (`geom_col()`), in descending order.
+Region 'Sub-Saharan Africa' has the most observations with missing HIV data. This is followed by Europe & Central Asia with the 2nd most observations with missing HIV data.
+```{r}
+#Tidying hiv dataframe
+tidy_hiv <- hiv %>% 
+  pivot_longer(cols=2:34, names_to="year", values_to = "Percentage_HIV_Cases_Age_15_49")
+#Left joining tidy_hiv and countries dataframes
+joined_hiv_countries <- left_join(tidy_hiv, countries, "country"= "country")
+joined_hiv_countries
+```
+```{r}
+# Determining NA values in joined_hiv_countries dataframe
+joined_hiv_countries %>%
+  filter(!is.na(region)) %>%
+  group_by(region) %>%
+  summarise(missing_hiv_values=sum(is.na(Percentage_HIV_Cases_Age_15_49))) %>%
+  mutate(
+    region=fct_reorder(region,-missing_hiv_values)) %>%
+# Plotting Bar Chart of Region Specific Missing HIV Data in Descending Order
+  ggplot(aes(x=region,y=missing_hiv_values))+
+  geom_col()+
+  labs(title="Bar Chart of Region Specific Missing HIV Data in Descending Order",
+    x= "Region",
+    y= "Missing NA values in HIV data"
+  )
+```
+1. How has mortality rate for under 5 changed by region? In each region, find the top 5 countries that have seen the greatest improvement, as well as those 5 countries where mortality rates have had the least improvement or even deterioration.
+
+```{r}
+#Minimum Year and Maximum Year determination
+mortality <- join_3 %>% 
+  group_by(country) %>%
+  summarise(minimum_year=min(year), maximum_year=max(year))
+mortality
+```
+
+```{r} 
+# Dataframe with original mortality rates
+join_5 <- left_join(join_3, mortality, "country"="country") %>% #Left Joining join_3 and mortality dataframes
+select(country, year, minimum_year, maximum_year, SH.DYN.MORT, region) %>% # Selecting required columns
+mutate(
+  original_mortality = ifelse(year == minimum_year, SH.DYN.MORT, 0)) %>% #Determining original mortality rates
+select(!year) %>%
+filter(!original_mortality == 0)%>%
+select(!SH.DYN.MORT)
+
+join_5
+# Dataframe with final mortality rates
+join_6 <- left_join(join_3, mortality, "country"="country") %>% #Left Joining join_3 and mortality dataframes
+select(country, year, minimum_year, maximum_year, SH.DYN.MORT, region) %>% # Selecting required columns
+mutate(
+  final_mortality = ifelse(year == maximum_year, SH.DYN.MORT, 0)) %>%  #Determining final mortality rates
+select(!year) %>%
+filter(!final_mortality == 0)%>%
+select(!SH.DYN.MORT)
+
+join_6
+```
+```{r}
+# Joining aforementioned join_5 and join_6 dataframes along with Improvement in Mortality Rates calculation
+join_7 <- left_join(join_5, join_6, "country"="country") %>%  #Left Joining join_5 and join_6
+  mutate(
+    mortality_improvement = (final_mortality - original_mortality)/original_mortality) %>%
+  arrange(desc(mortality_improvement))
+
+join_7
+# Determining Change in Mortality Rate for Under 5 in each region
+mortality_improvement_by_region <- join_7 %>%
+  group_by(region) %>%
+  summarise(mean_mortality_improvement_rate = 100 * mean(mortality_improvement))
+
+mortality_improvement_by_region
+
+# Plot for Region-Specific Change in Mortality Rate for Under 5
+ggplot(mortality_improvement_by_region, aes(x = mean_mortality_improvement_rate, y = fct_reorder(region, -mean_mortality_improvement_rate))) +
+  geom_col()+
+  labs(
+    title= "Region-Specific Change in Mortality Rate for Under 5",
+    x= "Change in Mortality Rate for Under 5",
+    y="Region"
+  )
+```
+```{r}
+#Sub-Saharan Africa
+join_7 %>% #The Top 5 countries with the greatest improvement in mortality rates
+  filter(region == "Sub-Saharan Africa") %>%
+  slice_max(order_by = mortality_improvement, n = 5)
+
+join_7 %>% #The Top 5 countries with the least improvement in mortality rates
+  filter(region == "Sub-Saharan Africa") %>%
+  slice_max(order_by = -mortality_improvement, n = 5)
+
+```
+
+```{r}
+#South Asia
+join_7 %>% #The Top 5 countries with the greatest improvement in mortality rates
+  filter(region == "South Asia") %>%
+  slice_max(order_by = mortality_improvement, n = 5)
+
+join_7 %>% #The Top 5 countries with the least improvement in mortality rates
+  filter(region == "South Asia") %>%
+  slice_max(order_by = -mortality_improvement, n = 5)
+
+```
+
+```{r}
+#Latin America & Caribbean
+join_7 %>% #The Top 5 countries with the greatest improvement in mortality rates
+  filter(region == "Latin America & Caribbean") %>%
+  slice_max(order_by = mortality_improvement, n = 5)
+
+join_7 %>% #The Top 5 countries with the least improvement in mortality rates
+  filter(region == "Latin America & Caribbean") %>%
+  slice_max(order_by = -mortality_improvement, n = 5)
+
+```
+
+```{r}
+#Europe & Central Asia
+join_7 %>% #The Top 5 countries with the greatest improvement in mortality rates
+  filter(region == "Europe & Central Asia") %>%
+  slice_max(order_by = mortality_improvement, n = 5)
+
+join_7 %>% #The Top 5 countries with the least improvement in mortality rates
+  filter(region == "Europe & Central Asia") %>%
+  slice_max(order_by = -mortality_improvement, n = 5)
+
+```
+
+```{r}
+#Middle East & North Africa
+join_7 %>% #The Top 5 countries with the greatest improvement in mortality rates
+  filter(region == "Middle East & North Africa") %>%
+  slice_max(order_by = mortality_improvement, n = 5)
+
+join_7 %>% #The Top 5 countries with the least improvement in mortality rates
+  filter(region == "Middle East & North Africa") %>%
+  slice_max(order_by = -mortality_improvement, n = 5)
+
+```
+
+```{r}
+#East Asia & Pacific
+join_7 %>% #The Top 5 countries with the greatest improvement in mortality rates
+  filter(region == "East Asia & Pacific") %>%
+  slice_max(order_by = mortality_improvement, n = 5)
+
+join_7 %>% #The Top 5 countries with the least improvement in mortality rates
+  filter(region == "East Asia & Pacific") %>%
+  slice_max(order_by = -mortality_improvement, n = 5)
+```
+
+1. Is there a relationship between primary school enrollment and fertility rate?
+Yes, there seems to be an inverse relationship between primary school enrollment and fertility rate.
+```{r}
+ggplot(join_3, aes(x = SE.PRM.NENR, y = SP.DYN.TFRT.IN)) +
+    geom_point() +
+    geom_smooth(method="lm") +
+    labs(title = "Relationship between Primary School Enrollment and Fertility Rate", 
+         x = "Primary School Enrollment",
+         y = "Fertility Rate")
+```
 
 # Challenge 1: Excess rentals in TfL bike sharing
 
